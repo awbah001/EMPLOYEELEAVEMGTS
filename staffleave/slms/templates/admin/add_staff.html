@@ -1,0 +1,411 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Staff - Admin Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="material-icons" style="font-size: 1.5rem;">person_add</i>
+        </div>
+        <div>
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Add New Staff Member</h2>
+            <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Register a new employee to the system</p>
+        </div>
+    </div>
+</div>
+
+<!-- Form Card -->
+<div class="modern-card">
+    <!-- Success/Error Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
+                <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+                    <i class="material-icons" style="font-size: 16px; margin-right: 8px;">error_outline</i>
+                    {{message}}
+                </div>
+            {% elif message.tags == 'success' %}
+                <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+                    <i class="material-icons" style="font-size: 16px; margin-right: 8px;">check_circle</i>
+                    {{message}}
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    
+    <form method="POST" action="{% url 'add_staff' %}" enctype="multipart/form-data" style="max-width: 800px;">
+        {% csrf_token %}
+        
+        <!-- Profile Picture Section -->
+        <div style="text-align: center; margin-bottom: 2rem; padding: 1.5rem; background: var(--light-gray); border-radius: var(--radius-lg);">
+            <div style="width: 100px; height: 100px; background: var(--medium-gray); border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; overflow: hidden;" id="profile-preview">
+                <i class="material-icons" style="font-size: 3rem; color: var(--text-secondary);">person</i>
+            </div>
+            <div class="form-group">
+                <label style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; display: block;">Profile Picture</label>
+                <input type="file" name="profile_pic" accept="image/*" required style="display: none;" id="profile-pic-input">
+                <button type="button" class="btn-secondary" onclick="document.getElementById('profile-pic-input').click();" style="width: auto; padding: 0.5rem 1rem;">
+                    <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">cloud_upload</i>
+                    Choose Photo
+                </button>
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                    Recommended: Square image, max 2MB
+                </div>
+            </div>
+        </div>
+        
+        <!-- Personal Information -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="material-icons" style="color: var(--primary-blue);">person</i>
+                Personal Information
+            </h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label for="first_name">First Name *</label>
+                    <div style="position: relative;">
+                        <i class="material-icons input-icon">person</i>
+                        <input type="text" id="first_name" name="first_name" class="form-input" placeholder="Enter first name" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="last_name">Last Name *</label>
+                    <div style="position: relative;">
+                        <i class="material-icons input-icon">person</i>
+                        <input type="text" id="last_name" name="last_name" class="form-input" placeholder="Enter last name" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="gender">Gender *</label>
+                <div style="position: relative;">
+                    <i class="material-icons input-icon">wc</i>
+                    <select id="gender" name="gender" class="form-input" required style="padding-left: 2.5rem;">
+                        <option value="">Choose Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="address">Address *</label>
+                <div style="position: relative;">
+                    <i class="material-icons input-icon" style="top: 1rem;">location_on</i>
+                    <textarea id="address" name="address" class="form-input" placeholder="Enter full address" rows="4" required style="padding-left: 2.5rem; resize: vertical; min-height: 100px;"></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Account Information -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="material-icons" style="color: var(--primary-blue);">account_circle</i>
+                Account Information
+            </h3>
+            
+            <div class="form-group">
+                <label for="email">Email Address *</label>
+                <div style="position: relative;">
+                    <i class="material-icons input-icon">email</i>
+                    <input type="email" id="email" name="email" class="form-input" placeholder="Enter email address" required>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="username">Username *</label>
+                    <div style="position: relative;">
+                        <i class="material-icons input-icon">alternate_email</i>
+                        <input type="text" id="username" name="username" class="form-input" placeholder="Enter username" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="user_role">Assign Role *</label>
+                    <div style="position: relative;">
+                        <i class="material-icons input-icon">supervised_user_circle</i>
+                        <select id="user_role" name="user_role" class="form-input" required style="padding-left: 2.5rem;">
+                            <option value="">Choose Role</option>
+                            <option value="1">Super Admin</option>
+                            <option value="2" selected>Staff</option>
+                            <option value="3">Department Head</option>
+                            <option value="4">HR</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Department Selection (for Staff and Department Head) -->
+            <div class="form-group" id="department-group" style="display: none;">
+                <label for="department">Department *</label>
+                <div style="position: relative;">
+                    <i class="material-icons input-icon">business</i>
+                    <select id="department" name="department" class="form-input" style="padding-left: 2.5rem;">
+                        <option value="">Choose Department</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group" id="staff-type-group" style="display: block;">
+                <label for="staff_type">Staff Type</label>
+                <div style="position: relative;">
+                    <i class="material-icons input-icon">work</i>
+                    <select id="staff_type" name="staff_type" class="form-input" style="padding-left: 2.5rem;">
+                        <option value="">Choose Staff Type</option>
+                        <option value="Full-time">Full-time</option>
+                        <option value="Part-time">Part-time</option>
+                        <option value="Contract">Contract</option>
+                        <option value="Temporary">Temporary</option>
+                        <option value="Intern">Intern</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password *</label>
+                <div style="position: relative;">
+                    <i class="material-icons input-icon">lock</i>
+                    <input type="password" id="password" name="password" class="form-input" placeholder="Enter password" required>
+                    <button type="button" onclick="togglePassword()" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer;">
+                        <i class="material-icons" id="password-toggle-icon" style="color: var(--text-secondary);">visibility</i>
+                    </button>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                    Password should be at least 8 characters long
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid var(--medium-gray);">
+            <a href="{% url 'admin_home' %}" class="btn-secondary" style="width: auto; padding: 0.75rem 1.5rem;">
+                <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">arrow_back</i>
+                Cancel
+            </a>
+            <button type="submit" class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem;">
+                <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">person_add</i>
+                Save User
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Additional Styles -->
+<style>
+/* Ensure form inputs are visible and functional */
+.form-input, input, select, textarea {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    border: 2px solid var(--medium-gray) !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 8px !important;
+    font-size: 1rem !important;
+    background: var(--white) !important;
+    color: var(--text-primary) !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* Select dropdown styling */
+select.form-input {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+    appearance: none;
+}
+
+/* Textarea styling */
+textarea.form-input {
+    resize: vertical;
+    font-family: inherit;
+}
+
+/* File input button styling */
+input[type="file"] {
+    opacity: 0;
+    position: absolute;
+    z-index: -1;
+}
+
+/* Responsive form grid */
+@media (max-width: 768px) {
+    div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+    }
+    
+    div[style*="justify-content: flex-end"] {
+        justify-content: stretch !important;
+    }
+    
+    div[style*="justify-content: flex-end"] .btn-primary,
+    div[style*="justify-content: flex-end"] .btn-secondary {
+        flex: 1;
+    }
+}
+
+/* Form validation styles */
+.form-input:invalid:not(:focus) {
+    border-color: #ef4444;
+}
+
+.form-input:valid:not(:focus) {
+    border-color: #10b981;
+}
+
+/* Loading state for submit button */
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+</style>
+
+<!-- JavaScript for enhanced functionality -->
+<script>
+// Profile picture preview
+document.getElementById('profile-pic-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('profile-preview');
+            preview.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;" alt="Profile Preview">`;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Password visibility toggle
+function togglePassword() {
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = document.getElementById('password-toggle-icon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.textContent = 'visibility_off';
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.textContent = 'visibility';
+    }
+}
+
+// Form submission with loading state
+document.querySelector('form').addEventListener('submit', function(e) {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalContent = submitBtn.innerHTML;
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="loading"></div>Adding Staff...';
+    
+    // Re-enable after 10 seconds (fallback)
+    setTimeout(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalContent;
+    }, 10000);
+});
+
+// Real-time form validation
+document.querySelectorAll('.form-input[required]').forEach(input => {
+    input.addEventListener('blur', function() {
+        if (this.value.trim() === '') {
+            this.style.borderColor = '#ef4444';
+        } else {
+            this.style.borderColor = '#10b981';
+        }
+    });
+    
+    input.addEventListener('input', function() {
+        if (this.value.trim() !== '') {
+            this.style.borderColor = '#10b981';
+        }
+    });
+});
+
+// Email validation
+document.getElementById('email').addEventListener('blur', function() {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.value)) {
+        this.style.borderColor = '#ef4444';
+    } else {
+        this.style.borderColor = '#10b981';
+    }
+});
+
+// Password strength indicator
+document.getElementById('password').addEventListener('input', function() {
+    const password = this.value;
+    const strengthIndicator = this.parentElement.parentElement.querySelector('.password-strength');
+    
+    if (password.length >= 8) {
+        this.style.borderColor = '#10b981';
+    } else if (password.length > 0) {
+        this.style.borderColor = '#f59e0b';
+    }
+});
+
+// Show/hide fields based on user role
+document.getElementById('user_role').addEventListener('change', function() {
+    const staffTypeGroup = document.getElementById('staff-type-group');
+    const staffTypeSelect = document.getElementById('staff_type');
+    const departmentGroup = document.getElementById('department-group');
+    const departmentSelect = document.getElementById('department');
+    
+    const role = this.value;
+    
+    // Staff type - only for Staff (role 2)
+    if (role === '2') {
+        staffTypeGroup.style.display = 'block';
+        staffTypeSelect.required = true;
+    } else {
+        staffTypeGroup.style.display = 'none';
+        staffTypeSelect.required = false;
+        staffTypeSelect.value = '';
+    }
+    
+    // Department - for Staff (role 2) and Department Head (role 3)
+    if (role === '2' || role === '3') {
+        departmentGroup.style.display = 'block';
+        departmentSelect.required = (role === '3'); // Required for Department Head
+    } else {
+        departmentGroup.style.display = 'none';
+        departmentSelect.required = false;
+        departmentSelect.value = '';
+    }
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const userRole = document.getElementById('user_role');
+    const staffTypeGroup = document.getElementById('staff-type-group');
+    const staffTypeSelect = document.getElementById('staff_type');
+    const departmentGroup = document.getElementById('department-group');
+    const departmentSelect = document.getElementById('department');
+    
+    const role = userRole.value;
+    
+    if (role === '2') {
+        staffTypeGroup.style.display = 'block';
+        staffTypeSelect.required = true;
+        departmentGroup.style.display = 'block';
+        departmentSelect.required = false;
+    } else if (role === '3') {
+        departmentGroup.style.display = 'block';
+        departmentSelect.required = true;
+    }
+});
+</script>
+{% endblock %}

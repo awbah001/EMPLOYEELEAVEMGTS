@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django static collect
+/staticfiles/
+/media/
+
+# SQLite database
+*.sqlite3
+*.db
+
+# Django secret files
+*.env
+.env
+.env.*
+
+# VS Code
+.vscode/
+
+# Mac files
+.DS_Store
+
+# Windows thumbnail cache
+Thumbs.db
+
+# Python virtual environments
+venv/
+ENV/
+env/
+
+# Migrations (optional - generally you do want these tracked, so you may want to remove this section)
+# **/migrations/*.pyc
+
+# PyTest cache
+.pytest_cache/
+
+# mypy, coverage, etc
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Test output
+junitxml.xml
+
+# Logs
+*.log
+
+# JetBrains IDEs
+.idea/
+
+# Node (in case of mixed frontend)
+node_modules/
+
+# Uncomment next line if using Windows Python launcher
+# __pypackages__/

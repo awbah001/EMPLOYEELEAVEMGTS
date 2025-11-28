@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Update Leave Type - HR Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="material-icons" style="font-size: 1.5rem;">edit</i>
+        </div>
+        <div>
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Update Leave Type</h2>
+            <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Edit leave type: {{ leave_type.name }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Messages -->
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+            <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">error_outline</i>
+                {{message}}
+            </div>
+        {% elif message.tags == 'success' %}
+            <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">check_circle</i>
+                {{message}}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<!-- Form Card -->
+<div class="modern-card" style="max-width: 600px; margin: 0 auto;">
+    <form method="POST" action="{% url 'hr_update_leave_type' leave_type.id %}">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="name">Leave Type Name *</label>
+            <input type="text" id="name" name="name" class="form-input" value="{{ leave_type.name }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" class="form-input" rows="3">{{ leave_type.description|default:'' }}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="max_days_per_year">Max Days Per Year *</label>
+            <input type="number" id="max_days_per_year" name="max_days_per_year" class="form-input" value="{{ leave_type.max_days_per_year }}" min="0" required>
+        </div>
+        
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" name="requires_approval" {% if leave_type.requires_approval %}checked{% endif %} style="width: auto;">
+                <span>Requires Approval</span>
+            </label>
+        </div>
+        
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" name="is_active" {% if leave_type.is_active %}checked{% endif %} style="width: auto;">
+                <span>Active</span>
+            </label>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid var(--medium-gray);">
+            <a href="{% url 'hr_manage_leave_types' %}" class="btn-secondary" style="width: auto; padding: 0.75rem 1.5rem;">
+                <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">arrow_back</i>
+                Cancel
+            </a>
+            <button type="submit" class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem;">
+                <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">save</i>
+                Update Leave Type
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

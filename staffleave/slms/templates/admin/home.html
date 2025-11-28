@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - HarmonyLeave (E/SLMS){% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 4px;">
+            <img src="{% static 'assets/images/lms.png' %}" alt="HarmonyLeave (E/SLMS)" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover;">
+        </div>
+        <div>
+            <h2 style="margin: 0; font-size: 1.75rem; font-weight: 600;">Welcome {{ user.first_name }} {{ user.last_name }}!!!</h2>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Total Users Card -->
+    <div class="modern-card" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: var(--white); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
+        <div style="position: relative; z-index: 1;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Total Users</div>
+                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{total_users}}</div>
+                </div>
+                <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="material-icons" style="font-size: 1.5rem;">people</i>
+                </div>
+            </div>
+            <a href="{% url 'admin_manage_users' %}" style="color: rgba(255, 255, 255, 0.9); text-decoration: none; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; transition: opacity 0.2s ease;">
+                Manage users
+                <i class="material-icons" style="font-size: 1rem;">arrow_forward</i>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Total Staff Card -->
+    <div class="modern-card" style="background: linear-gradient(135deg, #10b981 0%, #047857 100%); color: var(--white); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
+        <div style="position: relative; z-index: 1;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Total Staff</div>
+                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{staff_count}}</div>
+                </div>
+                <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="material-icons" style="font-size: 1.5rem;">group</i>
+                </div>
+            </div>
+            <a href="{% url 'view_staff' %}" style="color: rgba(255, 255, 255, 0.9); text-decoration: none; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; transition: opacity 0.2s ease;">
+                View all staff
+                <i class="material-icons" style="font-size: 1rem;">arrow_forward</i>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Departments Card -->
+    <div class="modern-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: var(--white); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
+        <div style="position: relative; z-index: 1;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Departments</div>
+                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{total_departments}}</div>
+                </div>
+                <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="material-icons" style="font-size: 1.5rem;">business</i>
+                </div>
+            </div>
+            <a href="{% url 'admin_manage_departments' %}" style="color: rgba(255, 255, 255, 0.9); text-decoration: none; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; transition: opacity 0.2s ease;">
+                Manage departments
+                <i class="material-icons" style="font-size: 1rem;">arrow_forward</i>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Active Users Card -->
+    <div class="modern-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: var(--white); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
+        <div style="position: relative; z-index: 1;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Active Users</div>
+                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{active_users}}</div>
+                </div>
+                <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="material-icons" style="font-size: 1.5rem;">check_circle</i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total Leave Requests Card -->
+    <div class="modern-card" style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: var(--white); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
+        <div style="position: relative; z-index: 1;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Leave Requests</div>
+                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{leave_count}}</div>
+                </div>
+                <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="material-icons" style="font-size: 1.5rem;">event_note</i>
+                </div>
+            </div>
+            <a href="{% url 'staff_leave_view_admin' %}" style="color: rgba(255, 255, 255, 0.9); text-decoration: none; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; transition: opacity 0.2s ease;">
+                Manage requests
+                <i class="material-icons" style="font-size: 1rem;">arrow_forward</i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="modern-card">
+    <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+        <i class="material-icons" style="color: var(--primary-blue);">flash_on</i>
+        Quick Actions
+    </h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <!-- Manage Users -->
+        <a href="{% url 'admin_manage_users' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(45, 90, 160, 0.05); border: 1px solid rgba(45, 90, 160, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
+            <div style="width: 40px; height: 40px; background: var(--gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">people</i>
+            </div>
+            <div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Manage Users</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">Create, edit, and assign roles to users</div>
+            </div>
+        </a>
+        
+        <!-- Manage Departments -->
+        <a href="{% url 'admin_manage_departments' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(249, 115, 22, 0.05); border: 1px solid rgba(249, 115, 22, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
+            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">business</i>
+            </div>
+            <div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Departments</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">Manage departments</div>
+            </div>
+        </a>
+        
+        <!-- System Settings -->
+        <a href="{% url 'admin_system_settings' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
+            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">settings</i>
+            </div>
+            <div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">System Settings</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">Configure system settings</div>
+            </div>
+        </a>
+        
+        <!-- Auth Configuration -->
+        <a href="{% url 'admin_auth_config' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(236, 72, 153, 0.05); border: 1px solid rgba(236, 72, 153, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
+            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">lock</i>
+            </div>
+            <div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Auth Config</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">Configure authentication</div>
+            </div>
+        </a>
+        
+        <!-- Add Staff -->
+        <a href="{% url 'add_staff' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(45, 90, 160, 0.05); border: 1px solid rgba(45, 90, 160, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
+            <div style="width: 40px; height: 40px; background: var(--gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">person_add</i>
+            </div>
+            <div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Add New Staff</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">Register new employee</div>
+            </div>
+        </a>
+        
+        <!-- Manage Staff -->
+        <a href="{% url 'view_staff' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
+            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #10b981 0%, #047857 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">manage_accounts</i>
+            </div>
+            <div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Manage Staff</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">View and edit staff details</div>
+            </div>
+        </a>
+        
+        <!-- Leave Requests -->
+        <a href="{% url 'staff_leave_view_admin' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(249, 115, 22, 0.05); border: 1px solid rgba(249, 115, 22, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
+            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">approval</i>
+            </div>
+            <div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Leave Requests</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">Review and approve requests</div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Recent Activity or Tips -->
+<div class="modern-card" style="background: var(--light-gray); border: 1px solid var(--medium-gray);">
+    <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+        <i class="material-icons" style="color: var(--primary-blue);">info</i>
+        System Overview
+    </h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+        <div style="text-align: center;">
+            <div style="width: 60px; height: 60px; background: rgba(45, 90, 160, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem;">
+                <i class="material-icons" style="color: var(--primary-blue); font-size: 1.5rem;">security</i>
+            </div>
+            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">Secure Platform</div>
+            <div style="font-size: 0.875rem; color: var(--text-secondary);">Your data is protected with enterprise-grade security</div>
+        </div>
+        
+        <div style="text-align: center;">
+            <div style="width: 60px; height: 60px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem;">
+                <i class="material-icons" style="color: #10b981; font-size: 1.5rem;">speed</i>
+            </div>
+            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">Fast Processing</div>
+            <div style="font-size: 0.875rem; color: var(--text-secondary);">Quick leave approvals and real-time updates</div>
+        </div>
+        
+        <div style="text-align: center;">
+            <div style="width: 60px; height: 60px; background: rgba(249, 115, 22, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem;">
+                <i class="material-icons" style="color: #f97316; font-size: 1.5rem;">support</i>
+            </div>
+            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">24/7 Support</div>
+            <div style="font-size: 0.875rem; color: var(--text-secondary);">Get help whenever you need it</div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Hover effects for quick action cards */
+.modern-card a:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+/* Statistics card hover effects */
+.modern-card:has(a[href*="view_staff"]):hover,
+.modern-card:has(a[href*="staff_leave_view_admin"]):hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-large);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .modern-card {
+        padding: 1rem;
+    }
+    
+    .modern-card h2 {
+        font-size: 1.5rem;
+    }
+    
+    .modern-card [style*="font-size: 2.5rem"] {
+        font-size: 2rem !important;
+    }
+}
+</style>
+{% endblock %}

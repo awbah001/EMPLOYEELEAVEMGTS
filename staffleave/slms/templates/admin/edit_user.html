@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit User - Admin Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="font-size: 2rem;">edit</i>
+            </div>
+            <div>
+                <h2 style="margin: 0; font-size: 1.75rem; font-weight: 600;">Edit User</h2>
+                <p style="margin: 0.25rem 0 0 0; opacity: 0.9; font-size: 0.875rem;">Edit user: {{ user.first_name }} {{ user.last_name }}</p>
+            </div>
+        </div>
+        <a href="{% url 'admin_manage_users' %}" style="color: var(--white); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.1); border-radius: var(--radius-md); transition: background 0.2s ease;">
+            <i class="material-icons" style="font-size: 1.25rem;">arrow_back</i>
+            Back
+        </a>
+    </div>
+</div>
+
+<!-- Messages -->
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'success' %}
+            <div class="succWrap" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 18px; margin-right: 8px; vertical-align: middle;">check_circle</i>
+                {{ message }}
+            </div>
+        {% elif message.tags == 'error' or message.tags == 'warning' %}
+            <div class="errorWrap" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 18px; margin-right: 8px; vertical-align: middle;">error_outline</i>
+                {{ message }}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<!-- Form Card -->
+<div class="modern-card">
+    <form method="POST" action="{% url 'admin_edit_user' user.id %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- Profile Picture -->
+        <div style="text-align: center; margin-bottom: 2rem; padding: 1.5rem; background: var(--light-gray); border-radius: var(--radius-lg);">
+            {% if user.profile_pic %}
+            <img src="/{{ user.profile_pic }}" alt="{{ user.first_name }}" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 1rem;" id="profile-preview">
+            {% else %}
+            <div style="width: 100px; height: 100px; background: var(--medium-gray); border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center;" id="profile-preview">
+                <i class="material-icons" style="font-size: 3rem; color: var(--text-secondary);">person</i>
+            </div>
+            {% endif %}
+            <input type="file" name="profile_pic" accept="image/*" style="display: none;" id="profile-pic-input">
+            <button type="button" class="btn-secondary" onclick="document.getElementById('profile-pic-input').click();" style="width: auto; padding: 0.5rem 1rem;">
+                Change Photo
+            </button>
+        </div>
+        
+        <!-- Personal Information -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="first_name">First Name <span style="color: #ef4444;">*</span></label>
+                <input type="text" id="first_name" name="first_name" class="form-input" value="{{ user.first_name }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="last_name">Last Name <span style="color: #ef4444;">*</span></label>
+                <input type="text" id="last_name" name="last_name" class="form-input" value="{{ user.last_name }}" required>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="email">Email <span style="color: #ef4444;">*</span></label>
+                <input type="email" id="email" name="email" class="form-input" value="{{ user.email }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="username">Username <span style="color: #ef4444;">*</span></label>
+                <input type="text" id="username" name="username" class="form-input" value="{{ user.username }}" required>
+            </div>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="password">Password (leave blank to keep current)</label>
+            <input type="password" id="password" name="password" class="form-input" placeholder="Enter new password">
+        </div>
+        
+        <!-- User Type and Status -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="user_type">User Type <span style="color: #ef4444;">*</span></label>
+                <select id="user_type" name="user_type" class="form-input" required>
+                    <option value="1" {% if user.user_type == '1' %}selected{% endif %}>Admin</option>
+                    <option value="2" {% if user.user_type == '2' %}selected{% endif %}>Staff</option>
+                    <option value="3" {% if user.user_type == '3' %}selected{% endif %}>Department Head</option>
+                    <option value="4" {% if user.user_type == '4' %}selected{% endif %}>HR</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="department-group" style="{% if user.user_type != '3' %}display: none;{% endif %}">
+                <label for="department_id">Department <span style="color: #ef4444;">*</span></label>
+                <select id="department_id" name="department_id" class="form-input">
+                    <option value="">Select Department</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}" {% if current_department and current_department.id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" name="is_active" {% if user.is_active %}checked{% endif %} style="width: 18px; height: 18px; cursor: pointer;">
+                <span>Active Account</span>
+            </label>
+        </div>
+        
+        <!-- Submit Button -->
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+            <a href="{% url 'admin_manage_users' %}" class="btn-secondary" style="padding: 0.875rem 1.5rem;">
+                Cancel
+            </a>
+            <button type="submit" class="btn-primary" style="padding: 0.875rem 1.5rem;">
+                <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">save</i>
+                Update User
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const userTypeSelect = document.getElementById('user_type');
+    const departmentGroup = document.getElementById('department-group');
+    const departmentSelect = document.getElementById('department_id');
+    
+    userTypeSelect.addEventListener('change', function() {
+        if (this.value === '3') {
+            departmentGroup.style.display = 'block';
+            departmentSelect.required = true;
+        } else {
+            departmentGroup.style.display = 'none';
+            departmentSelect.required = false;
+        }
+    });
+    
+    // Profile picture preview
+    const profilePicInput = document.getElementById('profile-pic-input');
+    const profilePreview = document.getElementById('profile-preview');
+    
+    profilePicInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profilePreview.innerHTML = `<img src="${e.target.result}" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">`;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+});
+</script>
+{% endblock %}
+

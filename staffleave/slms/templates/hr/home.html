@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}HR Dashboard - HarmonyLeave (E/SLMS){% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 4px;">
+            <img src="{% static 'assets/images/lms.png' %}" alt="HarmonyLeave (E/SLMS)" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover;">
+        </div>
+        <div>
+            <h2 style="margin: 0; font-size: 1.75rem; font-weight: 600;">HR Dashboard</h2>
+            <p style="margin: 0.25rem 0 0 0; opacity: 0.9; font-size: 0.875rem;">Welcome {{ user.first_name }} {{ user.last_name }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Total Staff Card -->
+    <div class="modern-card" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: var(--white); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
+        <div style="position: relative; z-index: 1;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Total Staff</div>
+                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{total_staff}}</div>
+                </div>
+                <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="material-icons" style="font-size: 1.5rem;">group</i>
+                </div>
+            </div>
+            <a href="{% url 'hr_manage_staff' %}" style="color: rgba(255, 255, 255, 0.9); text-decoration: none; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; transition: opacity 0.2s ease;">
+                Manage staff
+                <i class="material-icons" style="font-size: 1rem;">arrow_forward</i>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Total Leaves Card -->
+    <div class="modern-card" style="background: linear-gradient(135deg, #10b981 0%, #047857 100%); color: var(--white); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
+        <div style="position: relative; z-index: 1;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Total Leaves</div>
+                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{total_leaves}}</div>
+                </div>
+                <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="material-icons" style="font-size: 1.5rem;">event_note</i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pending Leaves Card -->
+    <div class="modern-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: var(--white); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
+        <div style="position: relative; z-index: 1;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Pending HR Review</div>
+                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{hr_pending}}</div>
+                </div>
+                <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="material-icons" style="font-size: 1.5rem;">pending</i>
+                </div>
+            </div>
+            <a href="{% url 'hr_approve_leave' %}" style="color: rgba(255, 255, 255, 0.9); text-decoration: none; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; transition: opacity 0.2s ease;">
+                Review leaves
+                <i class="material-icons" style="font-size: 1rem;">arrow_forward</i>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Approved Leaves Card -->
+    <div class="modern-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: var(--white); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
+        <div style="position: relative; z-index: 1;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Approved Leaves</div>
+                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{approved_leaves}}</div>
+                </div>
+                <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="material-icons" style="font-size: 1.5rem;">check_circle</i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="modern-card">
+    <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+        <i class="material-icons" style="color: var(--primary-blue);">flash_on</i>
+        Quick Actions
+    </h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <!-- Manage Staff -->
+        <a href="{% url 'hr_manage_staff' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(45, 90, 160, 0.05); border: 1px solid rgba(45, 90, 160, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
+            <div style="width: 40px; height: 40px; background: var(--gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">people</i>
+            </div>
+            <div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Manage Staff</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">Add and update staff</div>
+            </div>
+        </a>
+        
+        <!-- Manage Leave Types -->
+        <a href="{% url 'hr_manage_leave_types' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
+            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #10b981 0%, #047857 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">category</i>
+            </div>
+            <div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Leave Types</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">Define leave types</div>
+            </div>
+        </a>
+        
+        <!-- Set Entitlements -->
+        <a href="{% url 'hr_set_entitlements' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(249, 115, 22, 0.05); border: 1px solid rgba(249, 115, 22, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
+            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">assignment</i>
+            </div>
+            <div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Set Entitlements</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">Set leave entitlements</div>
+            </div>
+        </a>
+        
+        <!-- Approve Leave -->
+        <a href="{% url 'hr_approve_leave' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
+            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">approval</i>
+            </div>
+            <div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Approve Leave</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">Review and approve</div>
+            </div>
+        </a>
+        
+        <!-- Generate Reports -->
+        <a href="{% url 'hr_reports' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(236, 72, 153, 0.05); border: 1px solid rgba(236, 72, 153, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
+            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">assessment</i>
+            </div>
+            <div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Reports</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">Generate reports</div>
+            </div>
+        </a>
+        
+        <!-- Manage Holidays -->
+        <a href="{% url 'hr_manage_holidays' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
+            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">event</i>
+            </div>
+            <div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Holidays</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">Manage holidays</div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<style>
+.modern-card a:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+@media (max-width: 768px) {
+    .modern-card {
+        padding: 1rem;
+    }
+    
+    .modern-card h2 {
+        font-size: 1.5rem;
+    }
+    
+    .modern-card [style*="font-size: 2.5rem"] {
+        font-size: 2rem !important;
+    }
+}
+</style>
+{% endblock %}
+

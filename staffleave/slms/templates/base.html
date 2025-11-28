@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% load static %}
+    <head>
+        <!-- Title -->
+        <title>{% block title %}HarmonyLeave (E/SLMS){% endblock %}</title>
+        
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+        <meta charset="UTF-8">
+        <meta name="description" content="HarmonyLeave (E/SLMS) - Modern Dashboard" />
+        <meta name="keywords" content="staff,leave,management,dashboard" />
+        <meta name="author" content="HarmonyLeave" />
+        
+        <!-- Google Fonts -->
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <!-- Material Icons - Multiple sources for better loading -->
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        
+        <!-- Reset any existing styles first -->
+        <style>
+            /* Reset to prevent conflicts */
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: 'Inter', sans-serif !important; }
+        </style>
+        
+        <!-- DataTables for tables -->
+        <link rel="stylesheet" href="{% static 'assets/plugins/datatables/datatables.min.css' %}">
+        
+        <!-- Our Custom Styles - Load Last to Override Everything -->
+        <link href="{% static 'assets/css/custom.css' %}?v=2024e" rel="stylesheet" type="text/css"/>
+        
+        <style>
+            /* Force modern layout immediately */
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: var(--light-gray, #F8FAFC) !important;
+                font-family: 'Inter', sans-serif !important;
+            }
+            
+            /* Critical Material Icons fix */
+            .material-icons {
+                font-family: 'Material Icons' !important;
+                font-weight: normal !important;
+                font-style: normal !important;
+                line-height: 1 !important;
+                text-transform: none !important;
+                letter-spacing: normal !important;
+                word-wrap: normal !important;
+                white-space: nowrap !important;
+                direction: ltr !important;
+                -webkit-font-smoothing: antialiased !important;
+                text-rendering: optimizeLegibility !important;
+                -moz-osx-font-smoothing: grayscale !important;
+                -webkit-font-feature-settings: "liga" !important;
+                font-feature-settings: "liga" !important;
+            }
+            
+            /* Hide all old Materialize elements */
+            .mn-content, .mn-inner, .middle-content, .side-nav, .fixed-sidebar {
+                display: none !important;
+            }
+            
+            /* Show only our modern components */
+            .dashboard-container, .modern-header, .modern-sidebar, .main-content {
+                display: block !important;
+            }
+            
+            .errorWrap {
+                padding: 1rem;
+                margin: 0 0 1.5rem 0;
+                background: rgba(239, 68, 68, 0.1);
+                border: 1px solid rgba(239, 68, 68, 0.2);
+                border-radius: var(--radius-md);
+                color: #dc2626;
+                font-weight: 500;
+            }
+            
+            .succWrap {
+                padding: 1rem;
+                margin: 0 0 1.5rem 0;
+                background: rgba(34, 197, 94, 0.1);
+                border: 1px solid rgba(34, 197, 94, 0.2);
+                border-radius: var(--radius-md);
+                color: #16a34a;
+                font-weight: 500;
+            }
+            
+            /* Modern sidebar toggle for mobile */
+            .sidebar-toggle {
+                display: none;
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                background: var(--white);
+                border: none;
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                box-shadow: var(--shadow-medium);
+                z-index: 1001;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            
+            .sidebar-toggle:hover {
+                transform: scale(1.1);
+            }
+            
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+            }
+            
+            @media (max-width: 1024px) {
+                .sidebar-toggle {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .modern-sidebar {
+                    transform: translateX(-100%);
+                    transition: transform 0.3s ease;
+                }
+                
+                .modern-sidebar.active {
+                    transform: translateX(0);
+                }
+                
+                .sidebar-overlay.active {
+                    display: block;
+                }
+                
+                .main-content {
+                    margin-left: 0;
+                }
+            }
+        </style>
+        
+        {% block extra_css %}{% endblock %}
+    </head>
+    <body>
+        <!-- Force Modern Layout Container -->
+        <div class="dashboard-container">
+            <!-- Mobile Sidebar Toggle -->
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="material-icons">menu</i>
+            </button>
+            
+            <!-- Sidebar Overlay for Mobile -->
+            <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+        
+        <!-- Modern Header -->
+        <header class="modern-header">
+            <div class="header-brand">
+                <img src="{% static 'assets/images/lms.png' %}" alt="HarmonyLeave (E/SLMS)" style="width: 40px; height: 40px; margin-right: 0.75rem; border-radius: 50%; object-fit: cover;">
+                HarmonyLeave (E/SLMS)
+            </div>
+            
+            <div class="header-actions">
+                {% if user.user_type == '1' %}
+                    <!-- Admin Notifications -->
+                    <div class="notification-dropdown" style="position: relative;">
+                        <button class="notification-btn" onclick="toggleNotifications()" style="background: none; border: none; cursor: pointer; padding: 0.5rem; border-radius: 50%; transition: background 0.2s ease;">
+                            <i class="material-icons" style="color: var(--text-secondary);">notifications</i>
+                            {% if staff_leave %}
+                                <span class="notification-badge" style="position: absolute; top: 0; right: 0; background: #ef4444; color: white; border-radius: 50%; width: 8px; height: 8px;"></span>
+                            {% endif %}
+                        </button>
+                        
+                        <div class="notification-panel" id="notificationPanel" style="display: none; position: absolute; top: 100%; right: 0; background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); width: 300px; max-height: 400px; overflow-y: auto; z-index: 1000;">
+                            <div style="padding: 1rem; border-bottom: 1px solid var(--medium-gray);">
+                                <h4 style="margin: 0; font-size: 1rem; color: var(--text-primary);">Notifications</h4>
+                            </div>
+                            {% for leave in staff_leave %}
+                                {% if leave.status == 0 %}
+                                    <a href="{% url 'staff_leave_view_admin' %}" style="display: block; padding: 1rem; text-decoration: none; border-bottom: 1px solid var(--medium-gray); transition: background 0.2s ease;">
+                                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                            <div style="width: 40px; height: 40px; background: rgba(45, 90, 160, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                                <i class="material-icons" style="color: var(--primary-blue); font-size: 20px;">person</i>
+                                            </div>
+                                            <div>
+                                                <div style="font-weight: 500; color: var(--text-primary); font-size: 0.875rem;">Leave Request</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.75rem;">{{leave.staff_id.admin.first_name}} {{leave.staff_id.admin.last_name}} applied for leave</div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                {% endif %}
+                            {% empty %}
+                                <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
+                                    <i class="material-icons" style="font-size: 2rem; margin-bottom: 0.5rem;">notifications_none</i>
+                                    <div>No new notifications</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <!-- User Profile -->
+                <div class="user-profile" style="display: flex; align-items: center; gap: 0.75rem;">
+                    {% if user.profile_pic %}
+                        <img src="{{ user.profile_pic.url }}" alt="Profile" class="profile-avatar" style="width: 40px; height: 40px;">
+                    {% else %}
+                        <img src="{% static 'assets/images/lms.png' %}" alt="Profile" class="profile-avatar" style="width: 40px; height: 40px;">
+                    {% endif %}
+                    <div>
+                        <div style="font-weight: 500; color: var(--text-primary); font-size: 0.875rem;">{{ user.first_name }} {{ user.last_name }}</div>
+                        <div style="color: var(--text-secondary); font-size: 0.75rem;">{{ user.email }}</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Modern Sidebar -->
+        <aside class="modern-sidebar" id="sidebar">
+            <!-- Profile Section -->
+            <div class="sidebar-profile">
+                {% if user.profile_pic %}
+                    <img src="{{ user.profile_pic.url }}" alt="Profile" class="profile-avatar">
+                {% else %}
+                    <img src="{% static 'assets/images/lms.png' %}" alt="Profile" class="profile-avatar">
+                {% endif %}
+                <div class="profile-name">{{ user.first_name }} {{ user.last_name }}</div>
+                <div class="profile-email">{{ user.email }}</div>
+            </div>
+            
+            <!-- Navigation Menu -->
+            <nav>
+                <ul class="sidebar-nav">
+                    {% if user.user_type == '1' %}
+                        <!-- Admin Navigation -->
+                        <li><a href="{% url 'admin_home' %}" class="nav-link"><i class="material-icons">dashboard</i>Dashboard</a></li>
+                        <li><a href="{% url 'profile' %}" class="nav-link"><i class="material-icons">person</i>My Profile</a></li>
+                        <li><a href="{% url 'change_password' %}" class="nav-link"><i class="material-icons">lock</i>Change Password</a></li>
+                        
+                        <!-- User Management Section -->
+                        <li style="margin-top: 1.5rem;">
+                            <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">User Management</div>
+                        </li>
+                        <li><a href="{% url 'admin_manage_users' %}" class="nav-link"><i class="material-icons">people</i>Manage Users</a></li>
+                        
+                        <!-- Staff Management Section -->
+                        <li style="margin-top: 1.5rem;">
+                            <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Staff Management</div>
+                        </li>
+                        <li><a href="{% url 'add_staff' %}" class="nav-link"><i class="material-icons">person_add</i>Add Staff</a></li>
+                        <li><a href="{% url 'view_staff' %}" class="nav-link"><i class="material-icons">people</i>View Staff</a></li>
+                        <li><a href="{% url 'staff_leave_view_admin' %}" class="nav-link"><i class="material-icons">event_note</i>Leave Requests</a></li>
+                        
+                        <!-- System Management Section -->
+                        <li style="margin-top: 1.5rem;">
+                            <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">System Management</div>
+                        </li>
+                        <li><a href="{% url 'admin_manage_departments' %}" class="nav-link"><i class="material-icons">business</i>Departments</a></li>
+                        <li><a href="{% url 'admin_system_settings' %}" class="nav-link"><i class="material-icons">settings</i>System Settings</a></li>
+                        <li><a href="{% url 'admin_auth_config' %}" class="nav-link"><i class="material-icons">lock</i>Auth Configuration</a></li>
+                        
+                    {% elif user.user_type == '3' %}
+                        <!-- Department Head Navigation -->
+                        <li><a href="{% url 'dh_home' %}" class="nav-link"><i class="material-icons">dashboard</i>Dashboard</a></li>
+                        <li><a href="{% url 'profile' %}" class="nav-link"><i class="material-icons">person</i>My Profile</a></li>
+                        <li><a href="{% url 'change_password' %}" class="nav-link"><i class="material-icons">lock</i>Change Password</a></li>
+                        
+                        <!-- Leave Management Section -->
+                        <li style="margin-top: 1.5rem;">
+                            <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Leave Management</div>
+                        </li>
+                        <li><a href="{% url 'dh_review_leaves' %}" class="nav-link"><i class="material-icons">rate_review</i>Review Leaves</a></li>
+                        <li><a href="{% url 'dh_calendar' %}" class="nav-link"><i class="material-icons">calendar_today</i>Department Calendar</a></li>
+                        <li><a href="{% url 'dh_team_schedules' %}" class="nav-link"><i class="material-icons">schedule</i>Team Schedules</a></li>
+                        
+                    {% elif user.user_type == '4' %}
+                        <!-- HR Navigation -->
+                        <li><a href="{% url 'hr_home' %}" class="nav-link"><i class="material-icons">dashboard</i>Dashboard</a></li>
+                        <li><a href="{% url 'profile' %}" class="nav-link"><i class="material-icons">person</i>My Profile</a></li>
+                        <li><a href="{% url 'change_password' %}" class="nav-link"><i class="material-icons">lock</i>Change Password</a></li>
+                        
+                        <!-- Staff Management Section -->
+                        <li style="margin-top: 1.5rem;">
+                            <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Staff Management</div>
+                        </li>
+                        <li><a href="{% url 'hr_manage_staff' %}" class="nav-link"><i class="material-icons">group</i>Manage Staff</a></li>
+                        <li><a href="{% url 'hr_add_staff' %}" class="nav-link"><i class="material-icons">person_add</i>Add Staff</a></li>
+                        
+                        <!-- Leave Management Section -->
+                        <li style="margin-top: 1.5rem;">
+                            <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Leave Management</div>
+                        </li>
+                        <li><a href="{% url 'hr_manage_leave_types' %}" class="nav-link"><i class="material-icons">category</i>Leave Types</a></li>
+                        <li><a href="{% url 'hr_set_entitlements' %}" class="nav-link"><i class="material-icons">event_available</i>Set Entitlements</a></li>
+                        <li><a href="{% url 'hr_approve_leave' %}" class="nav-link"><i class="material-icons">check_circle</i>Approve Leave</a></li>
+                        <li><a href="{% url 'hr_manage_holidays' %}" class="nav-link"><i class="material-icons">event</i>Public Holidays</a></li>
+                        
+                        <!-- Reports Section -->
+                        <li style="margin-top: 1.5rem;">
+                            <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Reports</div>
+                        </li>
+                        <li><a href="{% url 'hr_reports' %}" class="nav-link"><i class="material-icons">assessment</i>Generate Reports</a></li>
+                        
+                    {% elif user.user_type == '2' %}
+                        <!-- Staff Navigation -->
+                        <li><a href="{% url 'staff_home' %}" class="nav-link"><i class="material-icons">dashboard</i>Dashboard</a></li>
+                        <li><a href="{% url 'profile' %}" class="nav-link"><i class="material-icons">person</i>My Profile</a></li>
+                        <li><a href="{% url 'change_password' %}" class="nav-link"><i class="material-icons">lock</i>Change Password</a></li>
+                        
+                        <!-- Leave Section -->
+                        <li style="margin-top: 1.5rem;">
+                            <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Leave</div>
+                        </li>
+                        <li><a href="{% url 'staff_apply_leave' %}" class="nav-link"><i class="material-icons">add_circle</i>Apply For Leave</a></li>
+                        <li><a href="{% url 'staff_leave_view' %}" class="nav-link"><i class="material-icons">history</i>Leave History</a></li>
+                        <li><a href="{% url 'staff_leave_balance' %}" class="nav-link"><i class="material-icons">account_balance_wallet</i>Leave Balance</a></li>
+                    {% else %}
+                        <!-- Fallback Navigation -->
+                        <li><a href="{% url 'admin_home' %}" class="nav-link"><i class="material-icons">dashboard</i>Dashboard</a></li>
+                        <li><a href="{% url 'profile' %}" class="nav-link"><i class="material-icons">person</i>My Profile</a></li>
+                        <li><a href="{% url 'change_password' %}" class="nav-link"><i class="material-icons">lock</i>Change Password</a></li>
+                    {% endif %}
+                    
+                    <!-- Sign Out -->
+                    <li style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--medium-gray);">
+                        <a href="{% url 'logout' %}" class="nav-link" style="color: #ef4444;"><i class="material-icons">exit_to_app</i>Sign Out</a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+        
+            <!-- Main Content -->
+            <main class="main-content">
+                {% block content %}
+                {% endblock %}
+            </main>
+        </div> <!-- End dashboard-container -->
+        
+        <!-- JavaScript -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="{% static 'assets/plugins/datatables/datatables.min.js'%}"></script>
+        <script src="https://cdn.datatables.net/1.10.4/js/jquery.dataTables.min.js"></script>
+        
+        <script>
+            // DataTables initialization removed from base.html
+            // Pages can initialize their own tables as needed
+            
+            // Sidebar toggle for mobile
+            function toggleSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.querySelector('.sidebar-overlay');
+                
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            }
+            
+            // Notification dropdown
+            function toggleNotifications() {
+                const panel = document.getElementById('notificationPanel');
+                panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            }
+            
+            // Close notifications when clicking outside
+            document.addEventListener('click', function(event) {
+                const notificationBtn = document.querySelector('.notification-btn');
+                const notificationPanel = document.getElementById('notificationPanel');
+                
+                if (notificationPanel && !notificationBtn.contains(event.target) && !notificationPanel.contains(event.target)) {
+                    notificationPanel.style.display = 'none';
+                }
+            });
+            
+            // Active navigation link highlighting
+            document.addEventListener('DOMContentLoaded', function() {
+                const currentPath = window.location.pathname;
+                const navLinks = document.querySelectorAll('.nav-link');
+                
+                navLinks.forEach(link => {
+                    if (link.getAttribute('href') === currentPath) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+            
+            // Smooth hover effects
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('mouseenter', function() {
+                    if (!this.classList.contains('active')) {
+                        this.style.background = 'rgba(45, 90, 160, 0.05)';
+                    }
+                });
+                
+                link.addEventListener('mouseleave', function() {
+                    if (!this.classList.contains('active')) {
+                        this.style.background = '';
+                    }
+                });
+            });
+        </script>
+        
+        <!-- Material Icons Fallback Script -->
+        <script>
+            // Check if Material Icons are loading properly
+            document.addEventListener('DOMContentLoaded', function() {
+                // Wait for fonts to load
+                setTimeout(function() {
+                    const materialIcons = document.querySelectorAll('.material-icons');
+                    
+                    // Icon mapping for fallbacks
+                    const iconMap = {
+                        'dashboard': '📊',
+                        'person': '👤', 
+                        'lock': '🔒',
+                        'person_add': '➕',
+                        'group': '👥',
+                        'event_note': '📋',
+                        'flash_on': '⚡',
+                        'business_center': '💼',
+                        'admin_panel_settings': '⚙️',
+                        'notifications': '🔔',
+                        'menu': '☰',
+                        'exit_to_app': '🚪',
+                        'add_circle': '➕',
+                        'history': '📝',
+                        'manage_accounts': '👥',
+                        'approval': '✅',
+                        'check_circle': '✅',
+                        'error_outline': '⚠️',
+                        'info': 'ℹ️',
+                        'edit': '✏️',
+                        'delete': '🗑️',
+                        'send': '📤',
+                        'arrow_back': '←',
+                        'arrow_forward': '→'
+                    };
+                    
+                    materialIcons.forEach(function(icon) {
+                        const iconName = icon.textContent.trim();
+                        // If the icon is showing text instead of symbol, it's not loading
+                        if (iconName && iconMap[iconName]) {
+                            // Check if the font is actually loading by measuring text width
+                            const span = document.createElement('span');
+                            span.style.fontFamily = 'Material Icons';
+                            span.style.fontSize = '24px';
+                            span.textContent = iconName;
+                            document.body.appendChild(span);
+                            const width = span.offsetWidth;
+                            document.body.removeChild(span);
+                            
+                            // If width is too large, the font isn't loading (text is showing)
+                            if (width > 30) {
+                                icon.innerHTML = iconMap[iconName];
+                                icon.style.fontFamily = 'Arial, sans-serif';
+                                icon.style.fontSize = '18px';
+                            }
+                        }
+                    });
+                }, 1000); // Wait 1 second for fonts to load
+            });
+        </script>
+        
+        {% block extra_js %}{% endblock %}
+    </body>
+</html>

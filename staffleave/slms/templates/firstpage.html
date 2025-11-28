@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% load static %}
+    <head>
+        <!-- Title -->
+        <title>HarmonyLeave (E/SLMS) | Welcome</title>
+        
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+        <meta charset="UTF-8">
+        <meta name="description" content="HarmonyLeave (E/SLMS) - Welcome Page" />
+        <meta name="keywords" content="staff,leave,management,portal" />
+        <meta name="author" content="HarmonyLeave" />
+        
+        <!-- Google Fonts -->
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <!-- Material Icons - Multiple sources for better loading -->
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        
+        <!-- Styles -->
+        <link href="{% static 'assets/css/custom.css' %}?v=2024e" rel="stylesheet" type="text/css"/>
+        
+        <style>
+            .welcome-page {
+                background: var(--gradient-primary);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .welcome-page::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                left: -50%;
+                width: 200%;
+                height: 200%;
+                background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+                animation: float 20s ease-in-out infinite;
+            }
+            
+            .welcome-container {
+                background: var(--white);
+                border-radius: var(--radius-xl);
+                box-shadow: var(--shadow-xl);
+                padding: var(--space-xl);
+                text-align: center;
+                max-width: 600px;
+                width: 100%;
+                margin: 0 var(--space-md);
+                position: relative;
+                z-index: 1;
+            }
+            
+            .welcome-logo {
+                width: 80px;
+                height: 80px;
+                background: var(--gradient-primary);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto var(--space-lg);
+                box-shadow: var(--shadow-medium);
+            }
+            
+            .welcome-logo i {
+                color: var(--white);
+                font-size: 2rem;
+            }
+            
+            .welcome-title {
+                font-size: 2.5rem;
+                font-weight: 700;
+                color: var(--text-primary);
+                margin-bottom: var(--space-sm);
+                line-height: 1.2;
+            }
+            
+            .welcome-subtitle {
+                font-size: 1.1rem;
+                color: var(--text-secondary);
+                margin-bottom: var(--space-xl);
+                line-height: 1.6;
+            }
+            
+            .login-options {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: var(--space-md);
+                margin-bottom: var(--space-lg);
+            }
+            
+            .login-card {
+                background: var(--light-gray);
+                border: 2px solid transparent;
+                border-radius: var(--radius-lg);
+                padding: var(--space-lg);
+                text-decoration: none;
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .login-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: var(--gradient-primary);
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .login-card:hover {
+                border-color: var(--primary-blue);
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-medium);
+            }
+            
+            .login-card:hover::before {
+                transform: translateX(0);
+            }
+            
+            .login-icon {
+                width: 50px;
+                height: 50px;
+                background: var(--gradient-primary);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto var(--space-sm);
+                transition: all 0.3s ease;
+            }
+            
+            .login-card:hover .login-icon {
+                transform: scale(1.1);
+            }
+            
+            .login-icon i {
+                color: var(--white);
+                font-size: 1.5rem;
+            }
+            
+            .login-title {
+                font-size: 1.25rem;
+                font-weight: 600;
+                color: var(--text-primary);
+                margin-bottom: var(--space-xs);
+            }
+            
+            .login-description {
+                font-size: 0.875rem;
+                color: var(--text-secondary);
+                line-height: 1.5;
+            }
+            
+            .features {
+                margin-top: var(--space-xl);
+                padding-top: var(--space-lg);
+                border-top: 1px solid var(--medium-gray);
+            }
+            
+            .features-title {
+                font-size: 1.125rem;
+                font-weight: 600;
+                color: var(--text-primary);
+                margin-bottom: var(--space-md);
+            }
+            
+            .features-list {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: var(--space-sm);
+                text-align: left;
+            }
+            
+            .feature-item {
+                display: flex;
+                align-items: center;
+                gap: var(--space-xs);
+                font-size: 0.875rem;
+                color: var(--text-secondary);
+            }
+            
+            .feature-item i {
+                color: var(--primary-blue);
+                font-size: 1rem;
+            }
+            
+            @media (max-width: 768px) {
+                .welcome-container {
+                    margin: var(--space-md);
+                    padding: var(--space-lg);
+                }
+                
+                .welcome-title {
+                    font-size: 2rem;
+                }
+                
+                .login-options {
+                    grid-template-columns: 1fr;
+                }
+                
+                .features-list {
+                    grid-template-columns: 1fr;
+                    text-align: center;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="welcome-page">
+            <div class="welcome-container">
+                <!-- Logo -->
+                <div class="welcome-logo" style="background: transparent; box-shadow: none;">
+                    <img src="{% static 'assets/images/lms.png' %}" alt="HarmonyLeave (E/SLMS)" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">
+                </div>
+                
+                <!-- Title and Description -->
+                <h1 class="welcome-title">HarmonyLeave (E/SLMS)</h1>
+                <p class="welcome-subtitle">
+                    Streamline your organization's leave management process with our comprehensive, 
+                    user-friendly platform designed for modern workplaces.
+                </p>
+                
+                <!-- Login Options -->
+                <div class="login-options">
+                    <a href="{% url 'login' %}" class="login-card">
+                        <div class="login-icon">
+                            <i class="material-icons">person</i>
+                        </div>
+                        <div class="login-title">Staff Login</div>
+                        <div class="login-description">
+                            Access your dashboard, apply for leave, and track your requests
+                        </div>
+                    </a>
+                    
+                    <a href="{% url 'login' %}" class="login-card">
+                        <div class="login-icon">
+                            <i class="material-icons">admin_panel_settings</i>
+                        </div>
+                        <div class="login-title">Admin Login</div>
+                        <div class="login-description">
+                            Manage staff, approve requests, and oversee leave policies
+                        </div>
+                    </a>
+                </div>
+                
+                <!-- Features -->
+                <div class="features">
+                    <h3 class="features-title">Key Features</h3>
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <i class="material-icons">check_circle</i>
+                            <span>Easy leave application</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="material-icons">check_circle</i>
+                            <span>Real-time approval status</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="material-icons">check_circle</i>
+                            <span>Comprehensive reporting</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="material-icons">check_circle</i>
+                            <span>Secure data management</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="material-icons">check_circle</i>
+                            <span>Mobile-friendly design</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="material-icons">check_circle</i>
+                            <span>Automated notifications</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--medium-gray);">
+                    <p style="font-size: 0.875rem; color: var(--text-secondary);">
+                        © 2024 HarmonyLeave (E/SLMS). All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Add smooth interactions -->
+        <script>
+            // Add hover effects and smooth animations
+            document.querySelectorAll('.login-card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-4px)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        </script>
+    </body>
+</html>

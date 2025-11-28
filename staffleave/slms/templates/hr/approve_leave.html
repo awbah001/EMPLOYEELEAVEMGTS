@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Approve Leave - HR Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="material-icons" style="font-size: 1.5rem;">approval</i>
+        </div>
+        <div>
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Review Leave Applications</h2>
+            <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Approve or reject pending leave requests</p>
+        </div>
+    </div>
+</div>
+
+<!-- Messages -->
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+            <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">error_outline</i>
+                {{message}}
+            </div>
+        {% elif message.tags == 'success' %}
+            <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">check_circle</i>
+                {{message}}
+            </div>
+        {% elif message.tags == 'warning' %}
+            <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">warning</i>
+                {{message}}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<!-- Statistics Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Pending Card -->
+    <div class="modern-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: var(--white);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">Pending HR Review</div>
+                <div style="font-size: 2rem; font-weight: 700;">{{ pending_count }}</div>
+            </div>
+            <i class="material-icons" style="font-size: 2rem; opacity: 0.3;">pending</i>
+        </div>
+    </div>
+    
+    <!-- Approved Today Card -->
+    <div class="modern-card" style="background: linear-gradient(135deg, #10b981 0%, #047857 100%); color: var(--white);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">Approved Today</div>
+                <div style="font-size: 2rem; font-weight: 700;">{{ approved_today }}</div>
+            </div>
+            <i class="material-icons" style="font-size: 2rem; opacity: 0.3;">check_circle</i>
+        </div>
+    </div>
+    
+    <!-- Rejected Today Card -->
+    <div class="modern-card" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: var(--white);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">Rejected Today</div>
+                <div style="font-size: 2rem; font-weight: 700;">{{ rejected_today }}</div>
+            </div>
+            <i class="material-icons" style="font-size: 2rem; opacity: 0.3;">cancel</i>
+        </div>
+    </div>
+</div>
+
+<!-- Leave Applications -->
+<div class="modern-card">
+    <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+        <i class="material-icons" style="color: var(--primary-blue);">list</i>
+        Pending Leave Applications
+    </h3>
+    
+    {% if pending_leaves %}
+        <div class="table-container" style="overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--medium-gray);">
+            <table class="modern-table" id="leave-table">
+                <thead>
+                    <tr>
+                        <th>Staff</th>
+                        <th>Leave Type</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Days</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leave in pending_leaves %}
+                    <tr>
+                        <td>
+                            <div style="font-weight: 600; color: var(--text-primary);">{{ leave.staff.admin.get_full_name }}</div>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">{{ leave.staff.employee_id }}</div>
+                        </td>
+                        <td>{{ leave.leave_type.name }}</td>
+                        <td>{{ leave.start_date|date:"M d, Y" }}</td>
+                        <td>{{ leave.end_date|date:"M d, Y" }}</td>
+                        <td>{{ leave.number_of_days }} days</td>
+                        <td>
+                            <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ leave.reason }}">
+                                {{ leave.reason }}
+                            </div>
+                            {% if leave.supporting_document %}
+                            <div style="margin-top: 0.5rem;">
+                                <a href="{{ leave.supporting_document.url }}" target="_blank" style="color: var(--primary-blue); font-size: 0.875rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                    <i class="material-icons" style="font-size: 1rem;">attachment</i>
+                                    View Document
+                                </a>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if leave.supervisor_status == 'pending' %}
+                                <span class="status-badge" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">Pending Supervisor</span>
+                            {% elif leave.supervisor_status == 'approved' %}
+                                <span class="status-badge" style="background: rgba(249, 115, 22, 0.1); color: #f97316;">Pending HR</span>
+                            {% elif leave.supervisor_status == 'rejected' %}
+                                <span class="status-rejected">Rejected by Supervisor</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <form method="POST" action="{% url 'hr_approve_leave_action' leave.id %}" style="display: inline;" onsubmit="return confirm('Are you sure you want to approve this leave?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem; border: none; cursor: pointer;" title="Approve">
+                                        <i class="material-icons" style="font-size: 1rem;">check</i>
+                                    </button>
+                                </form>
+                                <a href="{% url 'hr_reject_leave' leave.id %}" class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem; background: var(--error-red); color: white;" title="Reject">
+                                    <i class="material-icons" style="font-size: 1rem;">close</i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 3rem 1rem;">
+            <div style="width: 80px; height: 80px; background: var(--light-gray); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                <i class="material-icons" style="font-size: 2rem; color: var(--text-secondary);">approval</i>
+            </div>
+            <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">No Pending Applications</h4>
+            <p style="color: var(--text-secondary);">There are no leave applications pending your review at this time.</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if ($.fn.DataTable && document.getElementById('leave-table')) {
+        $('#leave-table').DataTable({
+            "pageLength": 10,
+            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            "order": [[2, "asc"]],
+        });
+    }
+});
+</script>
+
+{% endblock %}
+

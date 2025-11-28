@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Set Leave Entitlements - HR Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="material-icons" style="font-size: 1.5rem;">assignment</i>
+        </div>
+        <div>
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Set Leave Entitlements</h2>
+            <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Assign leave entitlements to staff members</p>
+        </div>
+    </div>
+</div>
+
+<!-- Messages -->
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+            <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">error_outline</i>
+                {{message}}
+            </div>
+        {% elif message.tags == 'success' %}
+            <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">check_circle</i>
+                {{message}}
+            </div>
+        {% elif message.tags == 'warning' %}
+            <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">warning</i>
+                {{message}}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+    <!-- Set Entitlement Form -->
+    <div class="modern-card">
+        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="material-icons" style="color: var(--primary-blue);">add_circle</i>
+            Set Entitlement
+        </h3>
+        
+        <form method="POST" action="{% url 'hr_set_entitlements' %}">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="staff">Staff Member *</label>
+                <select id="staff" name="staff_id" class="form-input" required>
+                    <option value="">Select Staff</option>
+                    {% for staff in staff_list %}
+                        <option value="{{ staff.id }}">{{ staff.admin.get_full_name }} - {{ staff.employee_id }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="leave_type">Leave Type *</label>
+                <select id="leave_type" name="leave_type_id" class="form-input" required>
+                    <option value="">Select Leave Type</option>
+                    {% for leave_type in leave_types %}
+                        <option value="{{ leave_type.id }}">{{ leave_type.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="entitlement_days">Entitlement Days *</label>
+                <input type="number" id="entitlement_days" name="entitlement_days" class="form-input" placeholder="0" min="0" step="0.5" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="year">Year *</label>
+                <input type="number" id="year" name="year" class="form-input" value="{{ current_year }}" min="2020" max="2100" required>
+            </div>
+            
+            <button type="submit" class="btn-primary" style="width: 100%;">
+                <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">add</i>
+                Set Entitlement
+            </button>
+        </form>
+    </div>
+    
+    <!-- Entitlements List -->
+    <div class="modern-card">
+        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="material-icons" style="color: var(--primary-blue);">list</i>
+            Current Entitlements
+        </h3>
+        
+        {% if entitlements %}
+            <div class="table-container" style="overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--medium-gray);">
+                <table class="modern-table" id="entitlements-table">
+                    <thead>
+                        <tr>
+                            <th>Staff</th>
+                            <th>Leave Type</th>
+                            <th>Year</th>
+                            <th>Entitlement</th>
+                            <th>Used</th>
+                            <th>Remaining</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entitlement in entitlements %}
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600; color: var(--text-primary);">{{ entitlement.staff.admin.get_full_name }}</div>
+                                <div style="font-size: 0.875rem; color: var(--text-secondary);">{{ entitlement.staff.employee_id }}</div>
+                            </td>
+                            <td>{{ entitlement.leave_type.name }}</td>
+                            <td>{{ entitlement.year }}</td>
+                            <td>{{ entitlement.total_days }} days</td>
+                            <td>{{ entitlement.used_days|default:"0" }} days</td>
+                            <td>
+                                <span class="status-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                                    {{ entitlement.remaining_days|default:entitlement.total_days }} days
+                                </span>
+                            </td>
+                            <td>
+                                <form method="POST" action="{% url 'hr_delete_entitlement' entitlement.id %}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this entitlement?');">
+                                    {% csrf_token %}
+                                    <button type="submit" style="background: none; border: none; color: var(--error-red); cursor: pointer;" title="Delete">
+                                        <i class="material-icons" style="font-size: 1.25rem;">delete</i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem 1rem;">
+                <div style="width: 80px; height: 80px; background: var(--light-gray); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                    <i class="material-icons" style="font-size: 2rem; color: var(--text-secondary);">assignment</i>
+                </div>
+                <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">No Entitlements Set</h4>
+                <p style="color: var(--text-secondary);">Set your first leave entitlement using the form on the left.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if ($.fn.DataTable && document.getElementById('entitlements-table')) {
+        $('#entitlements-table').DataTable({
+            "pageLength": 10,
+            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            "order": [[0, "asc"]],
+        });
+    }
+});
+</script>
+
+<style>
+@media (max-width: 1024px) {
+    div[style*="grid-template-columns: 1fr 2fr"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+{% endblock %}
+

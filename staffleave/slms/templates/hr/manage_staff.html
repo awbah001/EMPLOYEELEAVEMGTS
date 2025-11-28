@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Staff - HR Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="font-size: 1.5rem;">people</i>
+            </div>
+            <div>
+                <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Manage Staff</h2>
+                <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">View and manage staff information</p>
+            </div>
+        </div>
+        <a href="{% url 'hr_add_staff' %}" class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem;">
+            <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">person_add</i>
+            Add Staff
+        </a>
+    </div>
+</div>
+
+<!-- Staff List -->
+<div class="modern-card">
+    {% if staff_list %}
+        <div class="table-container" style="overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--medium-gray);">
+            <table class="modern-table" id="staff-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Staff Type</th>
+                        <th>Employee ID</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for staff in staff_list %}
+                    <tr>
+                        <td>{{ staff.admin.get_full_name }}</td>
+                        <td>{{ staff.admin.email }}</td>
+                        <td>{{ staff.department.name|default:"Not Assigned" }}</td>
+                        <td>{{ staff.staff_type|default:"-" }}</td>
+                        <td>{{ staff.employee_id|default:"-" }}</td>
+                        <td>
+                            <a href="{% url 'hr_update_staff' staff.id %}" style="color: var(--primary-blue); text-decoration: none;" title="Edit">
+                                <i class="material-icons" style="font-size: 1.25rem;">edit</i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 3rem 1rem;">
+            <div style="width: 80px; height: 80px; background: var(--light-gray); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                <i class="material-icons" style="font-size: 2rem; color: var(--text-secondary);">people</i>
+            </div>
+            <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">No Staff Found</h4>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Add your first staff member to get started.</p>
+            <a href="{% url 'hr_add_staff' %}" class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem;">
+                <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">person_add</i>
+                Add Staff
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if ($.fn.DataTable && document.getElementById('staff-table')) {
+        $('#staff-table').DataTable({
+            "pageLength": 10,
+            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            "order": [[0, "asc"]],
+        });
+    }
+});
+</script>
+{% endblock %}
+

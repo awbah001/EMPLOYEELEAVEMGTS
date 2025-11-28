@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Update Setting - HarmonyLeave (E/SLMS){% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="font-size: 2rem;">edit</i>
+            </div>
+            <div>
+                <h2 style="margin: 0; font-size: 1.75rem; font-weight: 600;">Update Setting</h2>
+                <p style="margin: 0.25rem 0 0 0; opacity: 0.9; font-size: 0.875rem;">Edit system setting: <code style="background: rgba(255, 255, 255, 0.2); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem;">{{ setting.key }}</code></p>
+            </div>
+        </div>
+        <a href="{% url 'superadmin_system_settings' %}" style="color: var(--white); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.1); border-radius: var(--radius-md); transition: background 0.2s ease;">
+            <i class="material-icons" style="font-size: 1.25rem;">arrow_back</i>
+            Back to Settings
+        </a>
+    </div>
+</div>
+
+<!-- Messages -->
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'success' %}
+            <div class="succWrap" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 18px; margin-right: 8px; vertical-align: middle;">check_circle</i>
+                {{ message }}
+            </div>
+        {% elif message.tags == 'error' %}
+            <div class="errorWrap" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 18px; margin-right: 8px; vertical-align: middle;">error_outline</i>
+                {{ message }}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<!-- Update Setting Form -->
+<div class="modern-card">
+    <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+        <i class="material-icons" style="color: var(--primary-blue);">settings</i>
+        Edit Setting Details
+    </h3>
+    
+    <!-- Setting Info -->
+    <div style="background: rgba(45, 90, 160, 0.05); border: 1px solid rgba(45, 90, 160, 0.1); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 2rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <i class="material-icons" style="color: var(--primary-blue); font-size: 18px;">info</i>
+            <span style="font-weight: 600; color: var(--text-primary);">Setting Key:</span>
+            <code style="background: rgba(45, 90, 160, 0.1); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.875rem; color: var(--primary-blue);">
+                {{ setting.key }}
+            </code>
+        </div>
+        <div style="font-size: 0.875rem; color: var(--text-secondary);">
+            Created: {{ setting.created_at|date:"M d, Y H:i" }} | 
+            Last Updated: {{ setting.updated_at|date:"M d, Y H:i" }}
+        </div>
+    </div>
+    
+    <form method="POST" action="{% url 'superadmin_update_setting' setting.id %}">
+        {% csrf_token %}
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="value" style="display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                Setting Value <span style="color: #ef4444;">*</span>
+            </label>
+            <textarea 
+                id="value" 
+                name="value" 
+                class="form-input" 
+                required
+                rows="4"
+                style="width: 100%; padding: 0.75rem; border: 2px solid var(--medium-gray); border-radius: var(--radius-md); font-size: 1rem; transition: all 0.2s ease; resize: vertical; font-family: inherit;"
+            >{{ setting.value }}</textarea>
+            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem;">Enter the new value for this setting</p>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="description" style="display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                Description
+            </label>
+            <textarea 
+                id="description" 
+                name="description" 
+                class="form-input" 
+                placeholder="Describe what this setting does..." 
+                rows="3"
+                style="width: 100%; padding: 0.75rem; border: 2px solid var(--medium-gray); border-radius: var(--radius-md); font-size: 1rem; transition: all 0.2s ease; resize: vertical; font-family: inherit;"
+            >{{ setting.description|default:"" }}</textarea>
+            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem;">Optional: Provide a description of what this setting controls</p>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-primary" style="background: var(--gradient-primary); color: var(--white); border: none; padding: 0.875rem 1.5rem; border-radius: var(--radius-md); font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 0.5rem;">
+                <i class="material-icons" style="font-size: 18px;">save</i>
+                Update Setting
+            </button>
+            <a href="{% url 'superadmin_system_settings' %}" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.875rem 1.5rem; background: transparent; color: var(--text-secondary); border: 2px solid var(--medium-gray); border-radius: var(--radius-md); font-size: 1rem; font-weight: 500; text-decoration: none; transition: all 0.2s ease;">
+                <i class="material-icons" style="font-size: 18px;">cancel</i>
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<style>
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary-blue) !important;
+    box-shadow: 0 0 0 3px rgba(45, 90, 160, 0.1) !important;
+}
+
+.btn-primary:hover {
+    background: var(--gradient-secondary) !important;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-medium);
+}
+
+a[href*="system_settings"]:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+@media (max-width: 768px) {
+    .modern-card {
+        padding: 1rem;
+    }
+}
+</style>
+{% endblock %}
+

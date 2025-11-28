@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Leave Types - HR Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="material-icons" style="font-size: 1.5rem;">category</i>
+        </div>
+        <div>
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Manage Leave Types</h2>
+            <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Define and manage leave types for the organization</p>
+        </div>
+    </div>
+</div>
+
+<!-- Messages -->
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+            <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">error_outline</i>
+                {{message}}
+            </div>
+        {% elif message.tags == 'success' %}
+            <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">check_circle</i>
+                {{message}}
+            </div>
+        {% elif message.tags == 'warning' %}
+            <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">warning</i>
+                {{message}}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+    <!-- Add Leave Type Form -->
+    <div class="modern-card">
+        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="material-icons" style="color: var(--primary-blue);">add_circle</i>
+            Add New Leave Type
+        </h3>
+        
+        <form method="POST" action="{% url 'hr_manage_leave_types' %}">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="name">Leave Type Name *</label>
+                <input type="text" id="name" name="name" class="form-input" placeholder="e.g., Annual Leave" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" class="form-input" placeholder="Enter description" rows="3"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="max_days_per_year">Max Days Per Year *</label>
+                <input type="number" id="max_days_per_year" name="max_days_per_year" class="form-input" placeholder="0" min="0" value="0" required>
+            </div>
+            
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="requires_approval" checked style="width: auto;">
+                    <span>Requires Approval</span>
+                </label>
+            </div>
+            
+            <button type="submit" class="btn-primary" style="width: 100%;">
+                <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">add</i>
+                Add Leave Type
+            </button>
+        </form>
+    </div>
+    
+    <!-- Leave Types List -->
+    <div class="modern-card">
+        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="material-icons" style="color: var(--primary-blue);">list</i>
+            Existing Leave Types
+        </h3>
+        
+        {% if leave_types %}
+            <div class="table-container" style="overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--medium-gray);">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Max Days/Year</th>
+                            <th>Requires Approval</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for leave_type in leave_types %}
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600; color: var(--text-primary);">{{ leave_type.name }}</div>
+                                {% if leave_type.description %}
+                                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.25rem;">{{ leave_type.description }}</div>
+                                {% endif %}
+                            </td>
+                            <td>{{ leave_type.max_days_per_year }}</td>
+                            <td>
+                                {% if leave_type.requires_approval %}
+                                    <span class="status-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">Yes</span>
+                                {% else %}
+                                    <span class="status-badge" style="background: rgba(107, 114, 128, 0.1); color: #6b7280;">No</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if leave_type.is_active %}
+                                    <span class="status-approved">Active</span>
+                                {% else %}
+                                    <span class="status-rejected">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'hr_update_leave_type' leave_type.id %}" style="color: var(--primary-blue); text-decoration: none;" title="Edit">
+                                    <i class="material-icons" style="font-size: 1.25rem;">edit</i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem 1rem;">
+                <div style="width: 80px; height: 80px; background: var(--light-gray); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                    <i class="material-icons" style="font-size: 2rem; color: var(--text-secondary);">category</i>
+                </div>
+                <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">No Leave Types</h4>
+                <p style="color: var(--text-secondary);">Create your first leave type using the form on the left.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+@media (max-width: 1024px) {
+    div[style*="grid-template-columns: 1fr 2fr"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+{% endblock %}
+

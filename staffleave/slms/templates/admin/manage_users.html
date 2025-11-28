@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Users - HarmonyLeave (E/SLMS){% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="font-size: 2rem;">people</i>
+            </div>
+            <div>
+                <h2 style="margin: 0; font-size: 1.75rem; font-weight: 600;">User Management</h2>
+                <p style="margin: 0.25rem 0 0 0; opacity: 0.9; font-size: 0.875rem;">Create, edit, and assign roles to users</p>
+            </div>
+        </div>
+        <a href="{% url 'admin_home' %}" style="color: var(--white); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.1); border-radius: var(--radius-md); transition: background 0.2s ease;">
+            <i class="material-icons" style="font-size: 1.25rem;">arrow_back</i>
+            Back
+        </a>
+    </div>
+</div>
+
+<!-- Messages -->
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'success' %}
+            <div class="succWrap" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 18px; margin-right: 8px; vertical-align: middle;">check_circle</i>
+                {{ message }}
+            </div>
+        {% elif message.tags == 'error' or message.tags == 'warning' %}
+            <div class="errorWrap" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 18px; margin-right: 8px; vertical-align: middle;">error_outline</i>
+                {{ message }}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<!-- Create/Edit User Form -->
+<div class="modern-card" style="margin-bottom: 2rem;" id="userFormCard">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+        <h3 style="margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+            <i class="material-icons" style="color: var(--primary-blue);">{% if edit_user %}edit{% else %}person_add{% endif %}</i>
+            {% if edit_user %}Edit User{% else %}Create New User{% endif %}
+        </h3>
+        {% if edit_user %}
+        <button type="button" onclick="cancelEdit()" class="btn-secondary" style="padding: 0.5rem 1rem;">
+            <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">close</i>
+            Cancel
+        </button>
+        {% endif %}
+    </div>
+    
+    <form method="POST" action="{% url 'admin_manage_users' %}" enctype="multipart/form-data" id="userForm">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="{% if edit_user %}update{% else %}create{% endif %}">
+        {% if edit_user %}
+        <input type="hidden" name="user_id" value="{{ edit_user.id }}">
+        {% endif %}
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="first_name">First Name <span style="color: #ef4444;">*</span></label>
+                <input type="text" id="first_name" name="first_name" class="form-input" 
+                       value="{% if edit_user %}{{ edit_user.first_name }}{% endif %}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="last_name">Last Name <span style="color: #ef4444;">*</span></label>
+                <input type="text" id="last_name" name="last_name" class="form-input" 
+                       value="{% if edit_user %}{{ edit_user.last_name }}{% endif %}" required>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="email">Email <span style="color: #ef4444;">*</span></label>
+                <input type="email" id="email" name="email" class="form-input" 
+                       value="{% if edit_user %}{{ edit_user.email }}{% endif %}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="username">Username <span style="color: #ef4444;">*</span></label>
+                <input type="text" id="username" name="username" class="form-input" 
+                       value="{% if edit_user %}{{ edit_user.username }}{% endif %}" required>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="password">Password {% if edit_user %}(leave blank to keep current){% else %}<span style="color: #ef4444;">*</span>{% endif %}</label>
+                <input type="password" id="password" name="password" class="form-input" 
+                       placeholder="{% if edit_user %}Enter new password{% else %}Enter password{% endif %}" 
+                       {% if not edit_user %}required{% endif %}>
+            </div>
+            
+            <div class="form-group">
+                <label for="user_type">User Type / Role <span style="color: #ef4444;">*</span></label>
+                <select id="user_type" name="user_type" class="form-input" required>
+                    <option value="2" {% if edit_user and edit_user.user_type == '2' %}selected{% elif not edit_user %}selected{% endif %}>Staff</option>
+                    <option value="1" {% if edit_user and edit_user.user_type == '1' %}selected{% endif %}>Admin</option>
+                    <option value="3" {% if edit_user and edit_user.user_type == '3' %}selected{% endif %}>Department Head</option>
+                    <option value="4" {% if edit_user and edit_user.user_type == '4' %}selected{% endif %}>HR</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-group" id="department-group" style="margin-bottom: 1rem; {% if not edit_user or edit_user.user_type != '3' %}display: none;{% endif %}">
+            <label for="department_id">Department <span style="color: #ef4444;">*</span></label>
+            <select id="department_id" name="department_id" class="form-input">
+                <option value="">Select Department</option>
+                {% for dept in departments %}
+                <option value="{{ dept.id }}" {% if edit_user_department and edit_user_department.id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="profile_pic">Profile Picture</label>
+                <input type="file" id="profile_pic" name="profile_pic" accept="image/*" class="form-input">
+            </div>
+            
+            <div class="form-group" style="display: flex; align-items: center; padding-top: 1.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" name="is_active" {% if edit_user and edit_user.is_active or not edit_user %}checked{% endif %} 
+                           style="width: 18px; height: 18px; cursor: pointer;">
+                    <span>Active Account</span>
+                </label>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+            <button type="submit" class="btn-primary" style="padding: 0.875rem 1.5rem;">
+                <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">save</i>
+                {% if edit_user %}Update User{% else %}Create User{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Filter Section -->
+<div class="modern-card" style="margin-bottom: 2rem;">
+    <form method="GET" action="{% url 'admin_manage_users' %}" style="display: flex; gap: 1rem; align-items: flex-end;">
+        <div class="form-group" style="flex: 1;">
+            <label for="user_type_filter" style="display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 0.5rem;">Filter by User Type</label>
+            <select id="user_type_filter" name="user_type" class="form-input" style="width: 100%; padding: 0.75rem; border: 2px solid var(--medium-gray); border-radius: var(--radius-md); font-size: 1rem;">
+                <option value="">All Users</option>
+                <option value="1" {% if user_type_filter == '1' %}selected{% endif %}>Admin</option>
+                <option value="2" {% if user_type_filter == '2' %}selected{% endif %}>Staff</option>
+                <option value="3" {% if user_type_filter == '3' %}selected{% endif %}>Department Head</option>
+                <option value="4" {% if user_type_filter == '4' %}selected{% endif %}>HR</option>
+            </select>
+        </div>
+        <button type="submit" class="btn-primary" style="padding: 0.75rem 1.5rem;">
+            <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">filter_list</i>
+            Filter
+        </button>
+        {% if user_type_filter %}
+        <a href="{% url 'admin_manage_users' %}" class="btn-secondary" style="padding: 0.75rem 1.5rem;">
+            Clear Filter
+        </a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Users Table -->
+<div class="modern-card">
+    <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+        <i class="material-icons" style="color: var(--primary-blue);">list</i>
+        Users ({{ users|length }})
+    </h3>
+    
+    {% if users %}
+        <div style="overflow-x: auto;">
+            <table class="modern-table" id="usersTable" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: var(--light-gray);">
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">ID</th>
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">Photo</th>
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">Name</th>
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">Username</th>
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">Email</th>
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">Role</th>
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">Status</th>
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user_obj in users %}
+                    <tr>
+                        <td style="padding: 1rem; font-weight: 600; color: var(--primary-blue);">#{{ user_obj.id }}</td>
+                        <td style="padding: 1rem;">
+                            {% if user_obj.profile_pic %}
+                            <img src="/{{ user_obj.profile_pic }}" alt="{{ user_obj.first_name }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--medium-gray);">
+                            {% else %}
+                            <div style="width: 50px; height: 50px; border-radius: 50%; background: var(--light-gray); display: flex; align-items: center; justify-content: center;">
+                                <i class="material-icons" style="color: var(--text-secondary);">person</i>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem; font-weight: 600; color: var(--text-primary);">{{ user_obj.first_name }} {{ user_obj.last_name }}</td>
+                        <td style="padding: 1rem; color: var(--text-secondary); font-family: monospace;">@{{ user_obj.username }}</td>
+                        <td style="padding: 1rem; color: var(--text-secondary);">{{ user_obj.email }}</td>
+                        <td style="padding: 1rem;">
+                            {% if user_obj.user_type == '1' %}
+                                <span class="status-badge" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">Admin</span>
+                            {% elif user_obj.user_type == '2' %}
+                                <span class="status-badge" style="background: rgba(45, 90, 160, 0.1); color: var(--primary-blue);">Staff</span>
+                            {% elif user_obj.user_type == '3' %}
+                                <span class="status-badge" style="background: rgba(249, 115, 22, 0.1); color: #f97316;">Dept Head</span>
+                            {% elif user_obj.user_type == '4' %}
+                                <span class="status-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">HR</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem;">
+                            {% if user_obj.is_active %}
+                                <span class="status-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">Active</span>
+                            {% else %}
+                                <span class="status-badge" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem; text-align: center;">
+                            <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                                <a href="{% url 'admin_manage_users' %}?edit={{ user_obj.id }}" 
+                                   style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: var(--radius-md); text-decoration: none; font-size: 0.875rem; transition: all 0.2s ease;" 
+                                   title="Edit">
+                                    <i class="material-icons" style="font-size: 18px;">edit</i>
+                                </a>
+                                {% if user_obj.is_active %}
+                                <a href="{% url 'admin_deactivate_user' user_obj.id %}" 
+                                   style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: var(--radius-md); text-decoration: none; font-size: 0.875rem; transition: all 0.2s ease;" 
+                                   title="Deactivate" onclick="return confirm('Are you sure you want to deactivate this user?')">
+                                    <i class="material-icons" style="font-size: 18px;">block</i>
+                                </a>
+                                {% else %}
+                                <a href="{% url 'admin_activate_user' user_obj.id %}" 
+                                   style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: var(--radius-md); text-decoration: none; font-size: 0.875rem; transition: all 0.2s ease;" 
+                                   title="Activate">
+                                    <i class="material-icons" style="font-size: 18px;">check_circle</i>
+                                </a>
+                                {% endif %}
+                                <a href="{% url 'admin_delete_user' user_obj.id %}" 
+                                   style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: var(--radius-md); text-decoration: none; font-size: 0.875rem; transition: all 0.2s ease;" 
+                                   title="Delete" onclick="return confirm('Are you sure you want to delete this user? This action cannot be undone.')">
+                                    <i class="material-icons" style="font-size: 18px;">delete</i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+            <i class="material-icons" style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.3;">people_outline</i>
+            <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">No users found</p>
+            <p style="font-size: 0.875rem; opacity: 0.7;">Create your first user to get started</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // DataTable initialization
+    if ($.fn.DataTable) {
+        $('#usersTable').DataTable({
+            "pageLength": 10,
+            "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
+            "order": [[0, "desc"]],
+            "responsive": true
+        });
+    }
+    
+    // Toggle department field based on user type
+    const userTypeSelect = document.getElementById('user_type');
+    const departmentGroup = document.getElementById('department-group');
+    const departmentSelect = document.getElementById('department_id');
+    
+    function toggleDepartmentField() {
+        if (userTypeSelect.value === '3') { // Department Head
+            departmentGroup.style.display = 'block';
+            departmentSelect.required = true;
+        } else {
+            departmentGroup.style.display = 'none';
+            departmentSelect.required = false;
+        }
+    }
+    
+    userTypeSelect.addEventListener('change', toggleDepartmentField);
+    
+    // Scroll to form when editing
+    {% if edit_user %}
+    document.getElementById('userFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    {% endif %}
+});
+
+function cancelEdit() {
+    window.location.href = '{% url "admin_manage_users" %}';
+}
+</script>
+{% endblock %}

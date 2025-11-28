@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Staff - HR Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="material-icons" style="font-size: 1.5rem;">person_add</i>
+        </div>
+        <div>
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Add New Staff Member</h2>
+            <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Register a new employee to the system</p>
+        </div>
+    </div>
+</div>
+
+<!-- Form Card -->
+<div class="modern-card">
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
+                <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+                    <i class="material-icons" style="font-size: 16px; margin-right: 8px;">error_outline</i>
+                    {{message}}
+                </div>
+            {% elif message.tags == 'success' %}
+                <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+                    <i class="material-icons" style="font-size: 16px; margin-right: 8px;">check_circle</i>
+                    {{message}}
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    
+    <form method="POST" action="{% url 'hr_add_staff' %}" enctype="multipart/form-data" style="max-width: 800px;">
+        {% csrf_token %}
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="first_name">First Name *</label>
+                <input type="text" id="first_name" name="first_name" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label for="last_name">Last Name *</label>
+                <input type="text" id="last_name" name="last_name" class="form-input" required>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" id="email" name="email" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label for="username">Username *</label>
+                <input type="text" id="username" name="username" class="form-input" required>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="gender">Gender *</label>
+                <select id="gender" name="gender" class="form-input" required>
+                    <option value="">Choose Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="staff_type">Staff Type</label>
+                <select id="staff_type" name="staff_type" class="form-input">
+                    <option value="">Choose Staff Type</option>
+                    <option value="Full-time">Full-time</option>
+                    <option value="Part-time">Part-time</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Temporary">Temporary</option>
+                    <option value="Intern">Intern</option>
+                </select>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="department">Department</label>
+                <select id="department" name="department" class="form-input">
+                    <option value="">Choose Department</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}">{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="employee_id">Employee ID</label>
+                <input type="text" id="employee_id" name="employee_id" class="form-input">
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="phone_number">Phone Number</label>
+                <input type="text" id="phone_number" name="phone_number" class="form-input">
+            </div>
+            <div class="form-group">
+                <label for="date_of_joining">Date of Joining</label>
+                <input type="date" id="date_of_joining" name="date_of_joining" class="form-input">
+            </div>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="address">Address</label>
+            <textarea id="address" name="address" class="form-input" rows="3"></textarea>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="password">Password *</label>
+            <input type="password" id="password" name="password" class="form-input" required>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="profile_pic">Profile Picture</label>
+            <input type="file" id="profile_pic" name="profile_pic" accept="image/*" class="form-input">
+        </div>
+        
+        <input type="hidden" name="user_role" value="2">
+        
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid var(--medium-gray);">
+            <a href="{% url 'hr_manage_staff' %}" class="btn-secondary" style="width: auto; padding: 0.75rem 1.5rem;">
+                Cancel
+            </a>
+            <button type="submit" class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem;">
+                Add Staff
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
