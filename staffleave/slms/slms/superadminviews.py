@@ -5,6 +5,7 @@ from django.db.models import Q
 from slmsapp.models import (
     CustomUser, Staff, Department, DepartmentHead, SystemSettings
 )
+from .auth_utils import validate_password
 from .decorators import super_admin_required
 
 
@@ -58,6 +59,11 @@ def CREATE_USER(request):
         is_active = request.POST.get('is_active') == 'on'
         profile_pic = request.FILES.get('profile_pic')
         
+        ok, msg = validate_password(password)
+        if not ok:
+            messages.warning(request, msg)
+            return redirect('superadmin_create_user')
+
         if CustomUser.objects.filter(email=email).exists():
             messages.warning(request, 'Email already exists')
             return redirect('superadmin_create_user')
@@ -121,6 +127,10 @@ def EDIT_USER(request, id):
         
         password = request.POST.get('password')
         if password:
+            ok, msg = validate_password(password)
+            if not ok:
+                messages.warning(request, msg)
+                return redirect('superadmin_edit_user', id=id)
             user.set_password(password)
         
         profile_pic = request.FILES.get('profile_pic')

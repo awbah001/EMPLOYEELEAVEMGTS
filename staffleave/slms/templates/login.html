@@ -192,11 +192,40 @@
             /* Input icon animation */
             .input-icon {
                 transition: all 0.3s ease;
+                z-index: 1;
             }
 
             .form-group:focus-within .input-icon {
                 transform: translateY(-50%) scale(1.2);
                 color: var(--primary-blue);
+            }
+            
+            /* Request Account link hover effect */
+            a[href^="mailto:"] {
+                transition: all 0.3s ease;
+            }
+            
+            a[href^="mailto:"]:hover {
+                background: var(--primary-blue);
+                color: var(--white);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(45, 90, 160, 0.3);
+            }
+            
+            a[href^="mailto:"]:hover i {
+                transform: scale(1.1);
+            }
+            
+            /* Forgot Password Link Hover */
+            a[href*="password-reset"]:hover {
+                background: rgba(45, 90, 160, 0.05);
+                border-color: var(--primary-blue);
+                transform: translateY(-2px);
+                box-shadow: 0 2px 8px rgba(45, 90, 160, 0.15);
+            }
+            
+            a[href*="password-reset"]:hover i {
+                transform: rotate(-15deg) scale(1.1);
             }
 
             /* Button animations */
@@ -362,7 +391,7 @@
                         <div class="form-group">
                             <label for="email">Email Address</label>
                             <div style="position: relative;">
-                                <i class="material-icons input-icon">person</i>
+                                <i class="material-icons input-icon">email</i>
                                 <input 
                                     type="email" 
                                     id="email" 
@@ -370,6 +399,7 @@
                                     class="form-input" 
                                     placeholder="Enter your email"
                                     required 
+                                    style="padding-left: 3rem;"
                                 />
                             </div>
                         </div>
@@ -386,6 +416,7 @@
                                     class="form-input" 
                                     placeholder="Enter your password"
                                     required 
+                                    style="padding-left: 3rem;"
                                 />
                             </div>
                         </div>
@@ -395,21 +426,27 @@
                             <i class="material-icons" style="font-size: 18px;">login</i>
                             Sign in
                         </button>
-                        
+
                         <!-- Forgot Password Link -->
-                        <div style="text-align: center; margin-top: 1rem;">
-                            <a href="{% url 'password_reset' %}" style="color: var(--primary-blue); text-decoration: none; font-size: 0.875rem; font-weight: 500; display: inline-flex; align-items: center; gap: 0.25rem; transition: opacity 0.2s ease;">
-                                <i class="material-icons" style="font-size: 16px;">help_outline</i>
-                                Forgot Password?
+                        <div style="text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--medium-gray);">
+                            <a href="{% url 'password_reset' %}" style="color: var(--primary-blue); text-decoration: none; font-size: 0.875rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border: 1px solid rgba(45, 90, 160, 0.2); border-radius: var(--radius-md); transition: all 0.3s ease;">
+                                <i class="material-icons" style="font-size: 18px;">lock_reset</i>
+                                Forgot Password? Reset Here
                             </a>
+                            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem; line-height: 1.4;">
+                                Enter your email address to receive a verification code
+                            </p>
                         </div>
                         
                     </form>
                     
+                    <!-- Request Account Section -->
+                    
+                    
                     <!-- Footer -->
                     <div style="text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--medium-gray);">
                         <p style="font-size: 0.875rem; color: var(--text-secondary);">
-                            © 2024 HarmonyLeave (E/SLMS). All rights reserved.
+                            © 2024 HarmonyLeave (E/SLMS) By Habibatu Kanu. All rights reserved.
                         </p>
                     </div>
                 </div>

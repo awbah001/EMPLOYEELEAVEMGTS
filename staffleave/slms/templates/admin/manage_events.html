@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Events - Admin Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="material-icons" style="font-size: 1.5rem;">calendar_today</i>
+        </div>
+        <div>
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Manage Calendar Events</h2>
+            <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Add and manage calendar events visible to all users</p>
+        </div>
+    </div>
+</div>
+
+<!-- Messages -->
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+            <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">error_outline</i>
+                {{message}}
+            </div>
+        {% elif message.tags == 'success' %}
+            <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">check_circle</i>
+                {{message}}
+            </div>
+        {% elif message.tags == 'warning' %}
+            <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">warning</i>
+                {{message}}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+    <!-- Add Event Form -->
+    <div class="modern-card">
+        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="material-icons" style="color: var(--primary-blue);">add_circle</i>
+            Add New Event
+        </h3>
+        
+        <form method="POST" action="{% url 'admin_manage_events' %}">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="title">Event Title *</label>
+                <input type="text" id="title" name="title" class="form-input" placeholder="e.g., Team Meeting" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="event_date">Event Date *</label>
+                <input type="date" id="event_date" name="event_date" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="event_type">Event Type *</label>
+                <select id="event_type" name="event_type" class="form-input" required>
+                    <option value="meeting">Meeting</option>
+                    <option value="training">Training</option>
+                    <option value="workshop">Workshop</option>
+                    <option value="announcement">Announcement</option>
+                    <option value="deadline">Deadline</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="location">Location</label>
+                <input type="text" id="location" name="location" class="form-input" placeholder="e.g., Conference Room A">
+            </div>
+            
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" id="is_all_day" name="is_all_day" style="width: auto;" checked onchange="toggleTimeFields()">
+                    <span>All Day Event</span>
+                </label>
+            </div>
+            
+            <div class="form-group" id="time_fields" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label for="start_time">Start Time</label>
+                        <input type="time" id="start_time" name="start_time" class="form-input">
+                    </div>
+                    <div>
+                        <label for="end_time">End Time</label>
+                        <input type="time" id="end_time" name="end_time" class="form-input">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" class="form-input" placeholder="Enter event description (optional)" rows="3"></textarea>
+            </div>
+            
+            <button type="submit" class="btn-primary" style="width: 100%;">
+                <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">add</i>
+                Add Event
+            </button>
+        </form>
+    </div>
+    
+    <!-- Events List -->
+    <div class="modern-card">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="material-icons" style="color: var(--primary-blue);">list</i>
+                Events Calendar
+            </h3>
+        </div>
+        
+        {% if events %}
+            <div class="table-container" style="overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--medium-gray);">
+                <table class="modern-table" id="events-table">
+                    <thead>
+                        <tr>
+                            <th>Event Title</th>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Time/Location</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in events %}
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600; color: var(--text-primary);">{{ event.title }}</div>
+                                {% if event.description %}
+                                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.25rem;">{{ event.description|truncatewords:10 }}</div>
+                                {% endif %}
+                            </td>
+                            <td>{{ event.event_date|date:"M d, Y" }}</td>
+                            <td>
+                                <span class="status-badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                                    {{ event.get_event_type_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if event.is_all_day %}
+                                    <span style="color: var(--text-secondary);">All Day</span>
+                                {% else %}
+                                    {% if event.start_time %}{{ event.start_time|time:"g:i A" }}{% endif %}
+                                    {% if event.end_time %} - {{ event.end_time|time:"g:i A" }}{% endif %}
+                                {% endif %}
+                                {% if event.location %}
+                                    <br><span style="font-size: 0.875rem; color: var(--text-secondary);">{{ event.location }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if event.is_active %}
+                                    <span class="status-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">Active</span>
+                                {% else %}
+                                    <span class="status-badge" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <a href="{% url 'admin_update_event' event.id %}" style="color: var(--primary-blue); text-decoration: none;" title="Edit">
+                                        <i class="material-icons" style="font-size: 1.25rem;">edit</i>
+                                    </a>
+                                    <form method="POST" action="{% url 'admin_delete_event' event.id %}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this event?');">
+                                        {% csrf_token %}
+                                        <button type="submit" style="background: none; border: none; color: var(--error-red); cursor: pointer; padding: 0;" title="Delete">
+                                            <i class="material-icons" style="font-size: 1.25rem;">delete</i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem 1rem;">
+                <div style="width: 80px; height: 80px; background: var(--light-gray); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                    <i class="material-icons" style="font-size: 2rem; color: var(--text-secondary);">calendar_today</i>
+                </div>
+                <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">No Events Defined</h4>
+                <p style="color: var(--text-secondary);">Add your first event using the form on the left.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Event Statistics -->
+<div class="modern-card" style="margin-top: 2rem;">
+    <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+        <i class="material-icons" style="color: var(--primary-blue);">insights</i>
+        Event Statistics
+    </h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+        <div style="padding: 1.5rem; background: rgba(59, 130, 246, 0.05); border-radius: var(--radius-lg); border-left: 4px solid #3b82f6;">
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Total Events</div>
+            <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary);">{{ total_events|default:"0" }}</div>
+        </div>
+        
+        <div style="padding: 1.5rem; background: rgba(16, 185, 129, 0.05); border-radius: var(--radius-lg); border-left: 4px solid #10b981;">
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Upcoming</div>
+            <div style="font-size: 2rem; font-weight: 700; color: #10b981;">{{ upcoming_events|default:"0" }}</div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleTimeFields() {
+    const isAllDay = document.getElementById('is_all_day').checked;
+    const timeFields = document.getElementById('time_fields');
+    timeFields.style.display = isAllDay ? 'none' : 'block';
+    if (isAllDay) {
+        document.getElementById('start_time').value = '';
+        document.getElementById('end_time').value = '';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof $ !== 'undefined' && $.fn.DataTable && document.getElementById('events-table')) {
+        $('#events-table').DataTable({
+            "pageLength": 10,
+            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            "order": [[1, "asc"]],
+        });
+    }
+});
+</script>
+
+<style>
+@media (max-width: 1024px) {
+    div[style*="grid-template-columns: 1fr 2fr"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+{% endblock %}
+

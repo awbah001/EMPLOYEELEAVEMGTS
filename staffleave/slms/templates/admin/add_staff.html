@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Add Staff - Admin Dashboard{% endblock %}
+{% block title %}Add User - Admin Dashboard{% endblock %}
 
 {% block content %}
 <!-- Page Header -->
@@ -11,8 +11,8 @@
             <i class="material-icons" style="font-size: 1.5rem;">person_add</i>
         </div>
         <div>
-            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Add New Staff Member</h2>
-            <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Register a new employee to the system</p>
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Add New User</h2>
+            <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Create a new user account</p>
         </div>
     </div>
 </div>
@@ -36,7 +36,7 @@
         {% endfor %}
     {% endif %}
     
-    <form method="POST" action="{% url 'add_staff' %}" enctype="multipart/form-data" style="max-width: 800px;">
+    <form method="POST" action="{% url 'admin_create_user' %}" enctype="multipart/form-data" style="max-width: 800px;">
         {% csrf_token %}
         
         <!-- Profile Picture Section -->
@@ -194,7 +194,7 @@
             </a>
             <button type="submit" class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem;">
                 <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">person_add</i>
-                Save User
+                Create User
             </button>
         </div>
     </form>

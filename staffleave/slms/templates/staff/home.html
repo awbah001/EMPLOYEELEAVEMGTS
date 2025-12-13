@@ -25,7 +25,7 @@
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
                 <div>
                     <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Total Applications</div>
-                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{staff_leave_history.count}}</div>
+                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{ total_applications }}</div>
                 </div>
                 <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                     <i class="material-icons" style="font-size: 1.5rem;">assignment</i>
@@ -41,9 +41,7 @@
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
                 <div>
                     <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Pending Review</div>
-                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">
-                        {% for leave in staff_leave_history %}{% if leave.status == 0 %}{{forloop.counter}}{% endif %}{% empty %}0{% endfor %}
-                    </div>
+                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{ pending_count }}</div>
                 </div>
                 <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                     <i class="material-icons" style="font-size: 1.5rem;">pending</i>
@@ -59,9 +57,7 @@
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
                 <div>
                     <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Approved</div>
-                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">
-                        {% for leave in staff_leave_history %}{% if leave.status == 1 %}{{forloop.counter}}{% endif %}{% empty %}0{% endfor %}
-                    </div>
+                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{ approved_count }}</div>
                 </div>
                 <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                     <i class="material-icons" style="font-size: 1.5rem;">check_circle</i>
@@ -70,6 +66,22 @@
         </div>
     </div>
 </div>
+    
+    <!-- Rejected Applications -->
+    <div class="modern-card" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: var(--white); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
+        <div style="position: relative; z-index: 1;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Rejected</div>
+                    <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{ rejected_count }}</div>
+                </div>
+                <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="material-icons" style="font-size: 1.5rem;">cancel</i>
+                </div>
+            </div>
+        </div>
+    </div>
 
 <!-- Quick Actions -->
 <div class="modern-card" style="margin-bottom: 2rem;">
@@ -211,6 +223,149 @@
 
 <!-- Additional Styles -->
 <style>
+/* Calendar Styles */
+.calendar-card {
+    background: #ffffff;
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    padding: 1.5rem;
+}
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+.calendar-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+.calendar-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+}
+.calendar-weekdays {
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-align: center;
+}
+.calendar-weekdays div {
+    padding: 0.35rem 0;
+}
+.day-cell {
+    background: #f8fafc;
+    border-radius: 12px;
+    min-height: 86px;
+    padding: 10px;
+    border: 1px solid transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+.day-cell:hover {
+    border-color: rgba(45, 90, 160, 0.2);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
+}
+.day-cell.empty {
+    background: transparent;
+    border: none;
+}
+.day-number {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.day-cell.today {
+    border-color: #facc15;
+    background: #fffbeb;
+}
+.day-cell.today .day-number {
+    color: #d97706;
+}
+.day-cell.has-leave {
+    border-color: rgba(45, 90, 160, 0.2);
+    background: #eef2ff;
+}
+.day-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: #ffffff;
+    border: 1px solid var(--medium-gray);
+}
+.day-chip.status-approved {
+    border-color: rgba(16, 185, 129, 0.35);
+    color: #0f9d74;
+    background: rgba(16, 185, 129, 0.08);
+}
+.day-chip.status-pending {
+    border-color: rgba(249, 115, 22, 0.35);
+    color: #d97706;
+    background: rgba(249, 115, 22, 0.08);
+}
+.day-chip.status-rejected {
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #b91c1c;
+    background: rgba(239, 68, 68, 0.08);
+}
+.calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    background: var(--medium-gray);
+}
+.legend-dot.status-approved { background: #10b981; }
+.legend-dot.status-pending { background: #f59e0b; }
+.legend-dot.status-rejected { background: #ef4444; }
+.legend-dot.holiday-dot { background: #f97316; }
+.legend-dot.event-dot { background: #3b82f6; }
+.legend-dot.today-dot { background: #facc15; }
+.day-cell.has-holiday {
+    border-color: rgba(249, 115, 22, 0.3);
+    background: rgba(249, 115, 22, 0.05);
+}
+.day-chip.holiday-chip {
+    border-color: rgba(249, 115, 22, 0.35);
+    color: #f97316;
+    background: rgba(249, 115, 22, 0.1);
+    padding: 4px 6px;
+}
+.day-chip.event-chip {
+    border-color: rgba(59, 130, 246, 0.35);
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+    padding: 4px 6px;
+}
+.day-cell.has-events {
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
 /* Quick action cards hover effects */
 .modern-card a:hover {
     transform: translateY(-2px);
@@ -252,6 +407,15 @@
     
     div[style*="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr))"] {
         grid-template-columns: 1fr !important;
+    }
+    
+    .day-cell {
+        min-height: 76px;
+        padding: 8px;
+    }
+    .day-chip {
+        font-size: 0.75rem;
+        padding: 5px 8px;
     }
 }
 

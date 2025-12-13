@@ -3,9 +3,10 @@ from slmsapp.EmailBackEnd import EmailBackEnd
 from django.contrib.auth import logout, login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from slmsapp.models import CustomUser, Staff, Staff_Leave, LeaveType, LeaveBalance, PublicHoliday
+from slmsapp.models import CustomUser, Staff, Staff_Leave, LeaveType, LeaveBalance, PublicHoliday, CalendarEvent
 from django.db.models import Q
 from datetime import date, datetime, timedelta
+from calendar import monthrange
 from .decorators import staff_required
 from .leave_utils import calculate_working_days, check_overlapping_leave
 import logging
@@ -16,10 +17,17 @@ logger = logging.getLogger(__name__)
 @login_required(login_url='/')
 @staff_required
 def HOME(request):
-    """Staff Dashboard with leave history"""
+    """Staff Dashboard with leave history and calendar"""
     try:
         staff = Staff.objects.get(admin=request.user.id)
         staff_leave_history = Staff_Leave.objects.filter(staff_id=staff.id).order_by('-created_at')[:5]
+
+        # Counts for quick stats on dashboard
+        all_leaves = Staff_Leave.objects.filter(staff_id=staff.id)
+        total_applications = all_leaves.count()
+        pending_count = all_leaves.filter(status=0).count()
+        approved_count = all_leaves.filter(status=1).count()
+        rejected_count = all_leaves.filter(status=2).count()
         
         # Get leave balances
         current_year = date.today().year
@@ -32,6 +40,10 @@ def HOME(request):
             'staff': staff,
             'staff_leave_history': staff_leave_history,
             'leave_balances': leave_balances,
+            'total_applications': total_applications,
+            'pending_count': pending_count,
+            'approved_count': approved_count,
+            'rejected_count': rejected_count,
         }
         return render(request, 'staff/home.html', context)
     except Staff.DoesNotExist:
@@ -273,3 +285,210 @@ def TRACK_LEAVE_STATUS(request, leave_id):
     except Staff_Leave.DoesNotExist:
         messages.error(request, 'Leave application not found.')
         return redirect('staff_leave_view')
+
+
+@login_required(login_url='/')
+@staff_required
+def STAFF_CALENDAR(request):
+    """View personal leave calendar"""
+    # region agent log
+    try:
+        import json, time, os
+        debugdir = os.path.dirname(r'c:\Users\DEVNET\Desktop\Staff-Leave-MS-Django-Python\.cursor\debug.log')
+        loginfo = {
+            "sessionId": "debug-session",
+            "runId": "run1",
+            "hypothesisId": "H2",
+            "location": "staffviews.py:292",
+            "message": "FUNC_ENTRY and FS status",
+            "data": {'cwd': os.getcwd(), 'debug_log_dir_exists': os.path.exists(debugdir), 'debug_log_path': r'c:\Users\DEVNET\Desktop\Staff-Leave-MS-Django-Python\\.cursor\\debug.log', 'debug_log_parent': debugdir},
+            "timestamp": int(time.time()*1000)
+        }
+        with open(r'c:\Users\DEVNET\Desktop\Staff-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
+            f.write(json.dumps(loginfo) + "\n")
+    except Exception as log_exc:
+        pass
+    # endregion
+    try:
+        # region agent log
+        try:
+            import json, time
+            with open(r'c:\Users\DEVNET\Desktop\Staff-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "H4",
+                    "location": "staffviews.py:294",
+                    "message": "STAFF_CALENDAR entry",
+                    "data": {"user_id": getattr(request.user, 'id', None)},
+                    "timestamp": int(time.time()*1000)
+                }) + "\n")
+        except Exception as log_exc:
+            pass
+        # endregion
+
+        staff = Staff.objects.get(admin=request.user.id)
+        # region agent log
+        try:
+            import json, time
+            with open(r'c:\Users\DEVNET\Desktop\Staff-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "H2",
+                    "location": "staffviews.py:295",
+                    "message": "Staff instance fetched",
+                    "data": {"staff_id": getattr(staff, 'id', None)},
+                    "timestamp": int(time.time()*1000)
+                }) + "\n")
+        except Exception as log_exc:
+            pass
+        # endregion
+        
+        # Get all leaves for this staff member
+        all_leaves = Staff_Leave.objects.filter(
+            staff_id=staff
+        ).order_by('from_date')
+        
+        # Get current month/year or from request
+        year = int(request.GET.get('year', date.today().year))
+        month = int(request.GET.get('month', date.today().month))
+        
+        # Filter leaves for the selected month
+        month_leaves = all_leaves.filter(
+            from_date__year=year,
+            from_date__month=month
+        )
+        
+        # Get public holidays for the month
+        public_holidays = PublicHoliday.objects.filter(
+            date__year=year,
+            date__month=month,
+            is_active=True
+        )
+        
+        # Get calendar events for the month
+        # region agent log
+        try:
+            import json, time
+            with open(r'c:\Users\DEVNET\Desktop\Staff-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "H1",
+                    "location": "staffviews.py:319",
+                    "message": "Query CalendarEvent.before",
+                    "data": {"year": year, "month": month},
+                    "timestamp": int(time.time()*1000)
+                }) + "\n")
+        except Exception as log_exc:
+            pass
+        # endregion
+        try:
+            calendar_events = CalendarEvent.objects.filter(
+                event_date__year=year,
+                event_date__month=month,
+                is_active=True
+            )
+            # region agent log
+            try:
+                import json, time
+                with open(r'c:\Users\DEVNET\Desktop\Staff-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "H1",
+                        "location": "staffviews.py:324",
+                        "message": "CalendarEvent query SUCCESS",
+                        "data": {"count": calendar_events.count()},
+                        "timestamp": int(time.time()*1000)
+                    }) + "\n")
+            except Exception as log_exc:
+                pass
+            # endregion
+        except Exception as e:
+            # region agent log
+            try:
+                import json, time
+                with open(r'c:\Users\DEVNET\Desktop\Staff-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "H1",
+                        "location": "staffviews.py:324",
+                        "message": "CalendarEvent query FAILED",
+                        "data": {"error": str(e)},
+                        "timestamp": int(time.time()*1000)
+                    }) + "\n")
+            except Exception as log_exc:
+                pass
+            # endregion
+            raise
+
+        # Build a day-by-day calendar map for the selected month
+        first_weekday = date(year, month, 1).weekday()  # Monday=0
+        days_in_month = monthrange(year, month)[1]
+        leave_by_date = {}
+        for leave in month_leaves:
+            current = leave.from_date
+            while current <= leave.to_date:
+                if current.year == year and current.month == month:
+                    leave_by_date[current] = leave
+                current += timedelta(days=1)
+        
+        # Map holidays by date
+        holiday_by_date = {h.date: h for h in public_holidays}
+        
+        # Map events by date
+        events_by_date = {}
+        for event in calendar_events:
+            if event.event_date not in events_by_date:
+                events_by_date[event.event_date] = []
+            events_by_date[event.event_date].append(event)
+
+        calendar_days = []
+        today = date.today()
+        status_labels = {0: 'Pending', 1: 'Approved', 2: 'Rejected'}
+        for day in range(1, days_in_month + 1):
+            current_date = date(year, month, day)
+            leave = leave_by_date.get(current_date)
+            holiday = holiday_by_date.get(current_date)
+            events = events_by_date.get(current_date, [])
+            
+            status = None
+            status_label = None
+            leave_name = None
+            if leave:
+                status = {0: 'pending', 1: 'approved', 2: 'rejected'}.get(leave.status, 'pending')
+                status_label = status_labels.get(leave.status, 'Pending')
+                leave_name = leave.leave_type_name or (leave.leave_type.name if leave.leave_type else 'Leave')
+
+            calendar_days.append(
+                {
+                    'day': day,
+                    'date': current_date,
+                    'is_today': current_date == today,
+                    'leave': leave,
+                    'status': status,
+                    'status_label': status_label,
+                    'leave_name': leave_name,
+                    'holiday': holiday,
+                    'events': events,
+                }
+            )
+        
+        context = {
+            'staff': staff,
+            'all_leaves': month_leaves,
+            'public_holidays': public_holidays,
+            'calendar_events': calendar_events,
+            'current_year': year,
+            'current_month': month,
+            'month_name': date(year, month, 1).strftime('%B'),
+            'leading_blanks': range(first_weekday),
+            'calendar_days': calendar_days,
+        }
+        return render(request, 'staff/calendar.html', context)
+    except Staff.DoesNotExist:
+        messages.error(request, 'Staff profile not found.')
+        return redirect('staff_home')

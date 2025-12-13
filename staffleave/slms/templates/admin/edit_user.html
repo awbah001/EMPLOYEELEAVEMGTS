@@ -16,7 +16,7 @@
                 <p style="margin: 0.25rem 0 0 0; opacity: 0.9; font-size: 0.875rem;">Edit user: {{ user.first_name }} {{ user.last_name }}</p>
             </div>
         </div>
-        <a href="{% url 'admin_manage_users' %}" style="color: var(--white); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.1); border-radius: var(--radius-md); transition: background 0.2s ease;">
+        <a href="{% url 'view_staff' %}" style="color: var(--white); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.1); border-radius: var(--radius-md); transition: background 0.2s ease;">
             <i class="material-icons" style="font-size: 1.25rem;">arrow_back</i>
             Back
         </a>
@@ -119,10 +119,22 @@
                 <span>Active Account</span>
             </label>
         </div>
+
+        <div style="margin-top: 0.75rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem;">
+                <input type="checkbox" name="create_staff_profile" id="create_staff_profile" {% if user.user_type == '2' and user.staff %}checked{% endif %} />
+                <span style="color:var(--text-secondary);">Ensure a minimal staff profile exists for this Staff account</span>
+            </label>
+        </div>
+
+        <div id="staff-extras" style="display: {% if user.user_type == '2' and user.staff %}block{% else %}none{% endif %}; margin-top:0.75rem;">
+            <label for="employee_id">Employee ID (optional)</label>
+            <input type="text" id="employee_id" name="employee_id" class="form-input" value="{% if user.staff %}{{ user.staff.employee_id }}{% endif %}" />
+        </div>
         
         <!-- Submit Button -->
         <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
-            <a href="{% url 'admin_manage_users' %}" class="btn-secondary" style="padding: 0.875rem 1.5rem;">
+            <a href="{% url 'view_staff' %}" class="btn-secondary" style="padding: 0.875rem 1.5rem;">
                 Cancel
             </a>
             <button type="submit" class="btn-primary" style="padding: 0.875rem 1.5rem;">
@@ -148,6 +160,14 @@ document.addEventListener('DOMContentLoaded', function() {
             departmentSelect.required = false;
         }
     });
+    // staff profile toggle
+    const createStaffCheckbox = document.getElementById('create_staff_profile');
+    const staffExtras = document.getElementById('staff-extras');
+    if (createStaffCheckbox) {
+        createStaffCheckbox.addEventListener('change', function(){
+            staffExtras.style.display = createStaffCheckbox.checked ? 'block' : 'none';
+        });
+    }
     
     // Profile picture preview
     const profilePicInput = document.getElementById('profile-pic-input');
@@ -166,4 +186,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
-

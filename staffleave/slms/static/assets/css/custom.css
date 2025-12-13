@@ -44,6 +44,43 @@
   --space-xl: 3rem;
 }
 
+/* Dark theme variables and overrides
+   Users can enable the dark theme by adding `dark-theme` class to <body>
+   We apply strong overrides where necessary to beat existing !important styles.
+*/
+body.dark-theme {
+  --white: #0b1220; /* card backgrounds */
+  --light-gray: #071123; /* page background */
+  --medium-gray: #0f2433; /* borders and subtle surfaces */
+  --dark-gray: #93a4b6; /* light text */
+  --text-primary: #e6eef6; /* main text */
+  --text-secondary: #adc4d6; /* secondary text */
+  --primary-blue: #63a0ff; /* accent color */
+  --primary-dark-blue: #3b6fcf;
+  --gradient-primary: linear-gradient(135deg,#16314b 0%, #224f7a 100%);
+  --gradient-secondary: linear-gradient(135deg,#0f2740 0%, #1d3b61 100%);
+}
+
+/* Make sure critical layout elements respect dark colors (override many !important rules) */
+body.dark-theme .dashboard-container { background: var(--light-gray) !important; }
+body.dark-theme .modern-header { background: rgba(8,15,24,0.9) !important; color: var(--text-primary) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.6) !important; }
+body.dark-theme .modern-sidebar { background: var(--white) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.6) !important; color: var(--text-primary) !important; }
+body.dark-theme .main-content { background: transparent !important; color: var(--text-primary) !important; }
+body.dark-theme .modern-card { background: var(--white) !important; color: var(--text-primary) !important; box-shadow: 0 6px 18px rgba(0,0,0,0.55) !important; }
+body.dark-theme .modern-table { background: transparent !important; color: var(--text-primary) !important; }
+body.dark-theme .modern-table th { background: rgba(255,255,255,0.03) !important; color: var(--text-secondary) !important; }
+body.dark-theme .sidebar-nav a { color: var(--text-secondary) !important; }
+body.dark-theme .sidebar-nav a:hover, body.dark-theme .sidebar-nav a.active { background: rgba(99,160,255,0.07) !important; color: var(--primary-blue) !important; border-right-color: var(--primary-blue) !important; }
+body.dark-theme .profile-avatar { border: 3px solid rgba(99,160,255,0.12) !important; }
+body.dark-theme .btn-primary, body.dark-theme .btn { background: var(--gradient-primary) !important; color: var(--white) !important; }
+body.dark-theme .form-input { background: rgba(255,255,255,0.03) !important; border-color: rgba(255,255,255,0.06) !important; color: var(--text-primary) !important; }
+body.dark-theme .notification-panel { background: rgba(8,15,24,0.85) !important; color: var(--text-primary) !important; }
+body.dark-theme .notification-badge { background: #ef4444 !important; }
+
+/* Make transitions smoother */
+body, .modern-header, .modern-sidebar, .main-content, .modern-card { transition: background-color 180ms ease, color 180ms ease, box-shadow 200ms ease; }
+
+
 /* Global Reset and Base Styles */
 * {
   margin: 0;
@@ -208,16 +245,19 @@ body {
 
 .input-icon {
   position: absolute;
-  left: 0.75rem;
+  left: 0.875rem;
   top: 50%;
   transform: translateY(-50%);
   color: var(--dark-gray);
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 1;
 }
 
 .form-group:focus-within .input-icon {
   color: var(--primary-blue);
+  transform: translateY(-50%) scale(1.1);
 }
 
 /* Modern Button Styles */
@@ -297,7 +337,7 @@ body {
 }
 
 .modern-header {
-  background: var(--white);
+  background: linear-gradient(90deg, rgba(255,255,255,0.96), rgba(245,247,250,0.98));
   box-shadow: var(--shadow-light);
   padding: 0 var(--space-lg);
   height: 70px;
@@ -313,12 +353,57 @@ body {
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--primary-blue);
+  display: flex;
+  align-items: center;
+  transition: opacity 0.2s ease;
+}
+
+.header-brand:hover {
+  opacity: 0.8;
+}
+
+.header-brand:hover img {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+}
+
+/* Header buttons and theme icon tweaks */
+.header-actions button, .notification-btn {
+  background: rgba(20, 28, 40, 0.03);
+  border: 1px solid rgba(20,30,40,0.04);
+  padding: 0.5rem;
+}
+
+/* Primary and secondary button polish */
+.btn-primary {
+  background: linear-gradient(135deg,var(--primary-blue), var(--primary-light-blue)) !important;
+  padding: 0.75rem 1.25rem !important;
+  border-radius: 10px !important;
+}
+
+.btn-secondary {
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+}
+
+/* Small, subtle input and container improvements */
+.table-container {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(20,30,40,0.05);
+}
+
+/* Compact card header style */
+.modern-card > h3, .modern-card > div > h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 
 .modern-sidebar {
@@ -398,10 +483,11 @@ body {
 /* Modern Cards */
 .modern-card {
   background: var(--white);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-light);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-lg);
+  border-radius: calc(var(--radius-lg) + 4px);
+  box-shadow: 0 6px 18px rgba(22,28,37,0.08);
+  padding: calc(var(--space-lg) - 0.25rem);
+  margin-bottom: calc(var(--space-lg) - 0.5rem);
+  transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
 .modern-card h3 {
@@ -411,35 +497,64 @@ body {
   color: var(--text-primary);
 }
 
+/* Subtle card hover lift for visual depth (not too much) */
+.modern-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 36px rgba(20,28,40,0.12);
+}
+
 /* Modern Tables */
 .modern-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate; /* use separate for rounded corners on header */
+  border-spacing: 0;
   background: var(--white);
-  border-radius: var(--radius-lg);
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: var(--shadow-light);
+  box-shadow: 0 6px 18px rgba(20,28,40,0.06);
+  font-size: 0.95rem;
 }
 
-.modern-table th {
-  background: var(--light-gray);
-  padding: var(--space-sm) var(--space-md);
-  font-weight: 600;
+.modern-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,247,250,0.96));
+  padding: 0.75rem 1rem;
+  font-weight: 700;
   color: var(--text-primary);
   text-align: left;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid rgba(20,30,40,0.06);
 }
 
 .modern-table td {
-  padding: var(--space-sm) var(--space-md);
-  border-bottom: 1px solid var(--medium-gray);
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(20,30,40,0.06);
   color: var(--text-secondary);
+  vertical-align: middle;
 }
 
-.modern-table tr:hover {
-  background: rgba(45, 90, 160, 0.02);
+.modern-table tbody tr:nth-child(odd) {
+  background: rgba(20,28,40,0.02);
+}
+
+.modern-table tbody tr:hover {
+  background: rgba(45, 90, 160, 0.035);
+  transform: translateY(0);
+}
+
+/* Rounded corners for first/last header and body cells */
+.modern-table thead th:first-child { border-top-left-radius: 12px; }
+.modern-table thead th:last-child { border-top-right-radius: 12px; }
+.modern-table tbody tr:last-child td:first-child { border-bottom-left-radius: 12px; }
+.modern-table tbody tr:last-child td:last-child { border-bottom-right-radius: 12px; }
+
+/* Responsive small screens: reduce padding */
+@media (max-width: 768px) {
+  .modern-table thead th, .modern-table td { padding: 0.6rem 0.75rem; font-size: 0.85rem; }
 }
 
 /* Status Badges */
@@ -752,7 +867,7 @@ header.mn-header, .navbar-fixed,
   background: white !important;
   border-radius: 12px !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-  padding: 2rem !important;
+  padding: 1.25rem !important;
   margin-bottom: 2rem !important;
 }
 

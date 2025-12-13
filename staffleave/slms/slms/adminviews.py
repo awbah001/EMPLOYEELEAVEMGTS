@@ -4,9 +4,16 @@ from slmsapp.EmailBackEnd import EmailBackEnd
 from django.contrib.auth import  logout,login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from slmsapp.models import CustomUser,Staff,Staff_Leave,Department,DepartmentHead,SystemSettings
+from slmsapp.models import CustomUser,Staff,Staff_Leave,Department,DepartmentHead,SystemSettings,PublicHoliday,CalendarEvent
+from .auth_utils import validate_password, get_int_setting
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.urls import reverse
 from django.db.models import Q
 from .decorators import admin_required
+from datetime import date, timedelta
+from calendar import monthrange
 
 @login_required(login_url='/')
 @admin_required
@@ -30,86 +37,22 @@ def HOME(request):
 
 @login_required(login_url='/')
 def ADD_STAFF(request):
+    # Consolidate creation into the Admin CREATE_USER handler.
+    # - GET requests are redirected to the canonical Admin create user page
+    # - POST requests are delegated to CREATE_USER so there is a single source of truth
     if request.method == "POST":
-        profile_pic = request.FILES.get('profile_pic')
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        address = request.POST.get('address')
-        gender = request.POST.get('gender')
-        user_role = request.POST.get('user_role', '2')
-        staff_type = request.POST.get('staff_type', '')
-        department_id = request.POST.get('department', '')
+        # Delegate POST handling to the CREATE_USER function (keeps same behaviour)
+        return CREATE_USER(request)
 
-        if CustomUser.objects.filter(email=email).exists():
-            messages.warning(request,'Email is already Exist')
-            return redirect('add_staff')
-        
-        if CustomUser.objects.filter(username=username).exists():
-            messages.warning(request,'Username is already Exist')
-            return redirect('add_staff')
-        
-        else:
-            user = CustomUser(
-                first_name = first_name,
-                last_name = last_name,
-                email = email,
-                profile_pic = profile_pic,
-                user_type = user_role,
-                username = username
-            )
-            user.set_password(password)
-            user.save()
-
-            if user_role == '2':  # Staff
-                department = None
-                if department_id:
-                    try:
-                        department = Department.objects.get(id=department_id)
-                    except Department.DoesNotExist:
-                        pass
-                
-                staff = Staff(
-                    admin = user,
-                    address = address,
-                    gender = gender,
-                    staff_type = staff_type if staff_type else None,
-                    department = department
-                )
-                staff.save()
-                messages.success(request,'Staff member has been added successfully.')
-            elif user_role == '3':  # Department Head
-                # Create DepartmentHead record
-                department = None
-                if department_id:
-                    try:
-                        department = Department.objects.get(id=department_id)
-                        DepartmentHead.objects.get_or_create(
-                            admin=user,
-                            defaults={'department': department}
-                        )
-                        messages.success(request,'Department Head has been added successfully.')
-                    except Department.DoesNotExist:
-                        messages.warning(request,'Department not found. User created but Department Head record not created. Please assign department later.')
-                else:
-                    messages.warning(request,'Department Head created but no department assigned. Please assign department later.')
-            elif user_role == '4':  # HR
-                messages.success(request,'HR user has been added successfully.')
-            else:  # Super Admin or other
-                messages.success(request,'User has been added successfully.')
-            return redirect('add_staff')
-
-    departments = Department.objects.all()
-    context = {'departments': departments}
-    return render(request,'admin/add_staff.html', context)
+    # Redirect GET requests to the canonical admin create user UI
+    return redirect('admin_create_user')
 
 @login_required(login_url='/')
 def VIEW_STAFF(request):
-    staff = Staff.objects.all()
+    # Show all system users for Admin "View Users" — previously this page listed Staff records only.
+    users = CustomUser.objects.all().order_by('-date_joined')
     context = {
-        "staff":staff,
+        "users": users,
     }
     return render(request,'admin/view_staff.html',context)
 
@@ -147,7 +90,11 @@ def UPDATE_STAFF(request):
         user.first_name =first_name
         user.last_name =last_name
         user.email =email
-        if password != None and password !="":
+        if password is not None and password != "":
+            ok, msg = validate_password(password)
+            if not ok:
+                messages.warning(request, msg)
+                return redirect('view_staff')
             user.set_password(password)
         if profile_pic != None and profile_pic !="":
             user.profile_pic = profile_pic
@@ -230,6 +177,12 @@ def MANAGE_USERS(request):
             elif CustomUser.objects.filter(username=username).exists():
                 messages.warning(request, 'Username already exists')
             else:
+                # validate password before creating
+                ok, msg = validate_password(password)
+                if not ok:
+                    messages.warning(request, msg)
+                    return redirect('admin_manage_users')
+
                 user = CustomUser(
                     first_name=first_name,
                     last_name=last_name,
@@ -261,6 +214,14 @@ def MANAGE_USERS(request):
                     messages.success(request, 'HR user created successfully')
                 else:
                     messages.success(request, 'User created successfully')
+
+                # Optionally create minimal staff profile for Staff accounts
+                if user_type == '2' and request.POST.get('create_staff_profile') == 'on':
+                    employee_id = request.POST.get('employee_id', '')
+                    try:
+                        Staff.objects.get_or_create(admin=user, defaults={'employee_id': employee_id})
+                    except Exception as e:
+                        messages.warning(request, f'Failed to create staff profile: {str(e)}')
         
         elif action == 'update' and user_id:
             # Update existing user
@@ -278,6 +239,10 @@ def MANAGE_USERS(request):
                 
                 password = request.POST.get('password')
                 if password:
+                    ok, msg = validate_password(password)
+                    if not ok:
+                        messages.warning(request, msg)
+                        return redirect('admin_manage_users')
                     user.set_password(password)
                 
                 profile_pic = request.FILES.get('profile_pic')
@@ -302,6 +267,14 @@ def MANAGE_USERS(request):
                         messages.warning(request, 'Department Head role assigned but no department selected.')
                 elif old_user_type == '3' and new_user_type != '3':
                     DepartmentHead.objects.filter(admin=user).delete()
+
+                # If user changed to Staff and requested, ensure a Staff profile exists
+                if new_user_type == '2' and request.POST.get('create_staff_profile') == 'on':
+                    employee_id = request.POST.get('employee_id', '')
+                    try:
+                        Staff.objects.get_or_create(admin=user, defaults={'employee_id': employee_id})
+                    except Exception as e:
+                        messages.warning(request, f'Failed to create staff profile: {str(e)}')
                 
                 messages.success(request, 'User updated successfully')
             except CustomUser.DoesNotExist:
@@ -360,6 +333,7 @@ def MANAGE_USERS(request):
         'user_type_filter': user_type_filter,
         'departments': departments,
         'edit_user': edit_user,
+        'edit_user_staff': getattr(edit_user, 'staff', None) if edit_user else None,
         'edit_user_department': edit_user_department,
     }
     return render(request, 'admin/manage_users.html', context)
@@ -379,6 +353,12 @@ def CREATE_USER(request):
         is_active = request.POST.get('is_active') == 'on'
         profile_pic = request.FILES.get('profile_pic')
         
+        # validate password rules on creation from create_user form
+        ok, msg = validate_password(password)
+        if not ok:
+            messages.warning(request, msg)
+            return redirect('admin_create_user')
+
         if CustomUser.objects.filter(email=email).exists():
             messages.warning(request, 'Email already exists')
             return redirect('admin_create_user')
@@ -386,7 +366,7 @@ def CREATE_USER(request):
         if CustomUser.objects.filter(username=username).exists():
             messages.warning(request, 'Username already exists')
             return redirect('admin_create_user')
-        
+
         user = CustomUser(
             first_name=first_name,
             last_name=last_name,
@@ -418,6 +398,54 @@ def CREATE_USER(request):
             messages.success(request, 'HR user created successfully')
         else:
             messages.success(request, 'User created successfully')
+
+        # Create Staff profile when creating a Staff account or if create_staff_profile is checked
+        if (user_type == '2' or request.POST.get('create_staff_profile') == 'on'):
+            employee_id = request.POST.get('employee_id', '')
+            phone_number = request.POST.get('phone_number', '')
+            address = request.POST.get('address', '')
+            gender = request.POST.get('gender', '')
+            date_of_joining = request.POST.get('date_of_joining') or None
+            staff_type = request.POST.get('staff_type', 'Full-time')
+            department_id = request.POST.get('department_id') or None
+            
+            # Parse date_of_joining if provided
+            date_joined_obj = None
+            if date_of_joining:
+                try:
+                    from datetime import datetime
+                    date_joined_obj = datetime.strptime(date_of_joining, '%Y-%m-%d').date()
+                except:
+                    pass
+            
+            # Get department if provided
+            department = None
+            if department_id:
+                try:
+                    department = Department.objects.get(id=department_id)
+                except Department.DoesNotExist:
+                    pass
+            
+            try:
+                # Create Staff record with all information
+                staff_defaults = {
+                    'phone_number': phone_number if phone_number else None,
+                    'address': address if address else 'Not provided',
+                    'gender': gender if gender else 'Not specified',
+                    'staff_type': staff_type if staff_type else 'Full-time',
+                    'department': department,
+                }
+                
+                if employee_id:
+                    staff_defaults['employee_id'] = employee_id
+                if date_joined_obj:
+                    staff_defaults['date_of_joining'] = date_joined_obj
+                
+                Staff.objects.get_or_create(admin=user, defaults=staff_defaults)
+                messages.success(request, 'User created successfully with staff profile')
+            except Exception as e:
+                # Non-fatal, inform admin
+                messages.warning(request, f'Staff profile creation failed: {str(e)}')
         
         return redirect('admin_manage_users')
     
@@ -444,6 +472,10 @@ def EDIT_USER(request, id):
         
         password = request.POST.get('password')
         if password:
+            ok, msg = validate_password(password)
+            if not ok:
+                messages.warning(request, msg)
+                return redirect('admin_edit_user', id=id)
             user.set_password(password)
         
         profile_pic = request.FILES.get('profile_pic')
@@ -470,6 +502,14 @@ def EDIT_USER(request, id):
         elif old_user_type == '3' and new_user_type != '3':
             # User was Department Head but role changed - remove DepartmentHead record
             DepartmentHead.objects.filter(admin=user).delete()
+
+        # If user changed to Staff, and admin requested, ensure Staff profile exists
+        if new_user_type == '2' and request.POST.get('create_staff_profile') == 'on':
+            employee_id = request.POST.get('employee_id', '')
+            try:
+                Staff.objects.get_or_create(admin=user, defaults={'employee_id': employee_id})
+            except Exception as e:
+                messages.warning(request, f'Could not create staff profile: {str(e)}')
         
         messages.success(request, 'User updated successfully')
         return redirect('admin_manage_users')
@@ -533,6 +573,29 @@ def DELETE_USER(request, id):
     user.delete()
     messages.success(request, f'User {username} has been deleted')
     return redirect('admin_manage_users')
+
+
+@login_required(login_url='/')
+@admin_required
+def GENERATE_PASSWORD_RESET_LINK(request, id):
+    """Admins can generate a password reset URL for a user (useful when email delivery is not possible).
+    This returns a page showing the one-time reset link that can be copied and delivered to the user.
+    """
+    user = get_object_or_404(CustomUser, id=id)
+
+    # Create uid and token
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+
+    reset_path = reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+    reset_url = request.build_absolute_uri(reset_path)
+
+    context = {
+        'user': user,
+        'reset_url': reset_url,
+        'token_expires_minutes': int(get_int_setting('password_reset_timeout_minutes', 1440)) if get_int_setting('password_reset_timeout_minutes', None) else 1440
+    }
+    return render(request, 'admin/show_reset_link.html', context)
 
 
 @login_required(login_url='/')
@@ -627,25 +690,160 @@ def DELETE_DEPARTMENT(request, id):
 def SYSTEM_SETTINGS(request):
     """Manage system-wide settings"""
     if request.method == "POST":
-        key = request.POST.get('key')
-        value = request.POST.get('value')
-        description = request.POST.get('description')
-        
-        setting, created = SystemSettings.objects.get_or_create(
-            key=key,
-            defaults={'value': value, 'description': description}
-        )
-        
-        if not created:
-            setting.value = value
-            setting.description = description
-            setting.save()
-        
-        messages.success(request, 'Setting saved successfully')
-        return redirect('admin_system_settings')
-    
-    settings = SystemSettings.objects.all()
-    context = {'settings': settings}
+        # Support either single-key form or section forms
+        section = request.POST.get('section', '').lower()
+
+        if section == 'general':
+            # Save multiple general settings
+            company_name = request.POST.get('company_name', '')
+            timezone = request.POST.get('timezone', '')
+            working_days = request.POST.get('working_days_per_week', '')
+            maintenance_mode = request.POST.get('maintenance_mode') == 'on'
+
+            SystemSettings.objects.update_or_create(
+                key='company_name', defaults={'value': company_name, 'description': 'Company display name'}
+            )
+            SystemSettings.objects.update_or_create(
+                key='timezone', defaults={'value': timezone, 'description': 'System timezone'}
+            )
+            # validate working_days
+            try:
+                wd = int(working_days) if working_days != '' else 5
+                if wd < 0 or wd > 7:
+                    messages.warning(request, 'Working days must be between 0 and 7. Using default 5.')
+                    wd = 5
+            except Exception:
+                messages.warning(request, 'Invalid working days value. Using default 5.')
+                wd = 5
+
+            SystemSettings.objects.update_or_create(
+                key='working_days_per_week', defaults={'value': str(wd), 'description': 'Working days per week'}
+            )
+            SystemSettings.objects.update_or_create(
+                key='maintenance_mode', defaults={'value': str(maintenance_mode), 'description': 'Maintenance mode on/off'}
+            )
+
+            messages.success(request, 'General settings saved successfully')
+            return redirect('admin_system_settings')
+
+        elif section == 'leave_policies':
+            # Example leave policy fields; keep flexible
+            carryover = request.POST.get('carryover_days', '')
+            max_sick = request.POST.get('max_sick_per_year', '')
+
+            try:
+                c = int(carryover) if carryover != '' else 0
+                if c < 0:
+                    messages.warning(request, 'Carryover cannot be negative. Using 0.')
+                    c = 0
+            except Exception:
+                messages.warning(request, 'Invalid carryover value. Using 0.')
+                c = 0
+
+            try:
+                s = int(max_sick) if max_sick != '' else 10
+                if s < 0:
+                    messages.warning(request, 'Max sick leaves cannot be negative. Using 10.')
+                    s = 10
+            except Exception:
+                messages.warning(request, 'Invalid sick leave value. Using 10.')
+                s = 10
+            SystemSettings.objects.update_or_create(
+                key='leave_carryover_days', defaults={'value': str(carryover), 'description': 'Max leave carryover days'}
+            )
+            SystemSettings.objects.update_or_create(
+                key='leave_max_sick_per_year', defaults={'value': str(max_sick), 'description': 'Max sick leave per year'}
+            )
+            messages.success(request, 'Leave policy settings saved')
+            return redirect('admin_system_settings')
+
+        elif section == 'notifications':
+            email_enabled = request.POST.get('email_notifications') == 'on'
+            sender = request.POST.get('email_sender', '')
+            SystemSettings.objects.update_or_create(
+                key='email_notifications_enabled', defaults={'value': str(email_enabled), 'description': 'Enable/disable email notifications'}
+            )
+            SystemSettings.objects.update_or_create(
+                key='email_sender_address', defaults={'value': sender, 'description': 'Sender email address for notifications'}
+            )
+            messages.success(request, 'Notification settings saved')
+            return redirect('admin_system_settings')
+
+        elif section == 'security':
+            password_min = request.POST.get('password_min_length', '')
+            require_2fa = request.POST.get('require_2fa') == 'on'
+
+            try:
+                pmin = int(password_min) if password_min != '' else 8
+                if pmin < 4:
+                    messages.warning(request, 'Password minimum is too low; setting minimum to 4')
+                    pmin = 4
+            except Exception:
+                messages.warning(request, 'Invalid password minimum; using default 8')
+                pmin = 8
+            SystemSettings.objects.update_or_create(
+                key='password_min_length', defaults={'value': str(pmin), 'description': 'Minimum password length'}
+            )
+            SystemSettings.objects.update_or_create(
+                key='require_2fa', defaults={'value': str(require_2fa), 'description': 'Require 2FA for logins'}
+            )
+            # Login lockout configuration
+            login_lockout_threshold = request.POST.get('login_lockout_threshold', '')
+            login_lockout_minutes = request.POST.get('login_lockout_minutes', '')
+
+            try:
+                lt = int(login_lockout_threshold) if login_lockout_threshold != '' else 5
+                if lt < 1:
+                    messages.warning(request, 'Lockout threshold must be at least 1. Using default 5.')
+                    lt = 5
+            except Exception:
+                messages.warning(request, 'Invalid lockout threshold value; using default 5')
+                lt = 5
+
+            try:
+                lm = int(login_lockout_minutes) if login_lockout_minutes != '' else 15
+                if lm < 1:
+                    messages.warning(request, 'Lockout minutes must be at least 1. Using default 15.')
+                    lm = 15
+            except Exception:
+                messages.warning(request, 'Invalid lockout minutes; using default 15')
+                lm = 15
+
+            SystemSettings.objects.update_or_create(
+                key='login_lockout_threshold', defaults={'value': str(lt), 'description': 'Failed login attempts threshold'}
+            )
+            SystemSettings.objects.update_or_create(
+                key='login_lockout_minutes', defaults={'value': str(lm), 'description': 'Lockout duration in minutes'}
+            )
+            messages.success(request, 'Security settings saved')
+            return redirect('admin_system_settings')
+
+        else:
+            # Fallback - single key save (keeps backward compatibility)
+            key = request.POST.get('key')
+            value = request.POST.get('value')
+            description = request.POST.get('description')
+
+            setting, created = SystemSettings.objects.get_or_create(
+                key=key,
+                defaults={'value': value, 'description': description}
+            )
+
+            if not created:
+                setting.value = value
+                setting.description = description
+                setting.save()
+
+            messages.success(request, 'Setting saved successfully')
+            return redirect('admin_system_settings')
+
+    settings_qs = SystemSettings.objects.all()
+    # map for easy lookup in template
+    settings_map = {s.key: s.value for s in settings_qs}
+    context = {
+        'settings': settings_qs,
+        'settings_map': settings_map,
+    }
     return render(request, 'admin/system_settings.html', context)
 
 
@@ -668,49 +866,197 @@ def UPDATE_SETTING(request, id):
 
 @login_required(login_url='/')
 @admin_required
-def AUTH_CONFIGURATION(request):
-    """Configure authentication settings (Google login, SSO, etc.)"""
-    if request.method == "POST":
-        # Save authentication settings
-        google_enabled = request.POST.get('google_enabled') == 'on'
-        sso_enabled = request.POST.get('sso_enabled') == 'on'
-        google_client_id = request.POST.get('google_client_id', '')
-        google_client_secret = request.POST.get('google_client_secret', '')
-        
-        # Save to SystemSettings
-        SystemSettings.objects.update_or_create(
-            key='google_auth_enabled',
-            defaults={'value': str(google_enabled), 'description': 'Enable Google OAuth login'}
-        )
-        SystemSettings.objects.update_or_create(
-            key='sso_enabled',
-            defaults={'value': str(sso_enabled), 'description': 'Enable SSO authentication'}
-        )
-        SystemSettings.objects.update_or_create(
-            key='google_client_id',
-            defaults={'value': google_client_id, 'description': 'Google OAuth Client ID'}
-        )
-        SystemSettings.objects.update_or_create(
-            key='google_client_secret',
-            defaults={'value': google_client_secret, 'description': 'Google OAuth Client Secret'}
-        )
-        
-        messages.success(request, 'Authentication configuration saved successfully')
-        return redirect('admin_auth_config')
+def ADMIN_CALENDAR(request):
+    """View all leaves calendar for admin - shows ALL leaves (all statuses, all departments)"""
+    from datetime import date
     
-    # Get current settings
-    google_enabled = SystemSettings.objects.filter(key='google_auth_enabled').first()
-    sso_enabled = SystemSettings.objects.filter(key='sso_enabled').first()
-    google_client_id = SystemSettings.objects.filter(key='google_client_id').first()
-    google_client_secret = SystemSettings.objects.filter(key='google_client_secret').first()
+    # Get ALL leaves (approved, pending, rejected) across all departments - admin sees everything
+    all_leaves = Staff_Leave.objects.all().order_by('from_date')
+    
+    # Get current month/year or from request
+    year = int(request.GET.get('year', date.today().year))
+    month = int(request.GET.get('month', date.today().month))
+    
+    # Filter leaves for the selected month
+    month_leaves = all_leaves.filter(
+        from_date__year=year,
+        from_date__month=month
+    )
+    
+    # Get public holidays for the month
+    public_holidays = PublicHoliday.objects.filter(
+        date__year=year,
+        date__month=month,
+        is_active=True
+    )
+    
+    # Get calendar events for the month
+    calendar_events = CalendarEvent.objects.filter(
+        event_date__year=year,
+        event_date__month=month,
+        is_active=True
+    )
     
     context = {
-        'google_enabled': google_enabled.value if google_enabled else 'False',
-        'sso_enabled': sso_enabled.value if sso_enabled else 'False',
-        'google_client_id': google_client_id.value if google_client_id else '',
-        'google_client_secret': google_client_secret.value if google_client_secret else '',
+        'approved_leaves': month_leaves,
+        'public_holidays': public_holidays,
+        'calendar_events': calendar_events,
+        'current_year': year,
+        'current_month': month,
     }
-    return render(request, 'admin/auth_configuration.html', context)
+    return render(request, 'admin/calendar.html', context)
 
 
+@login_required(login_url='/')
+@admin_required
+def MANAGE_HOLIDAYS(request):
+    """Manage public holidays"""
+    from datetime import date
+    
+    if request.method == "POST":
+        name = request.POST.get('name')
+        holiday_date = request.POST.get('date')
+        description = request.POST.get('description', '')
+        is_recurring = request.POST.get('is_recurring') == 'on'
+        
+        if PublicHoliday.objects.filter(name=name, date=holiday_date).exists():
+            messages.warning(request, 'This holiday already exists')
+        else:
+            PublicHoliday.objects.create(
+                name=name,
+                date=holiday_date,
+                description=description,
+                is_recurring=is_recurring
+            )
+            messages.success(request, 'Public holiday added successfully')
+        
+        return redirect('admin_manage_holidays')
+    
+    current_year = date.today().year
+    holidays = PublicHoliday.objects.all().order_by('date')
+    
+    # Statistics
+    total_holidays = holidays.count()
+    upcoming_holidays = holidays.filter(date__gte=date.today()).count()
+    recurring_holidays = holidays.filter(is_recurring=True).count()
+    
+    context = {
+        'holidays': holidays,
+        'current_year': current_year,
+        'total_holidays': total_holidays,
+        'upcoming_holidays': upcoming_holidays,
+        'recurring_holidays': recurring_holidays,
+    }
+    return render(request, 'admin/manage_holidays.html', context)
 
+
+@login_required(login_url='/')
+@admin_required
+def UPDATE_HOLIDAY(request, id):
+    """Update public holiday"""
+    holiday = get_object_or_404(PublicHoliday, id=id)
+    
+    if request.method == "POST":
+        holiday.name = request.POST.get('name')
+        holiday.date = request.POST.get('date')
+        holiday.description = request.POST.get('description', '')
+        holiday.is_recurring = request.POST.get('is_recurring') == 'on'
+        holiday.is_active = request.POST.get('is_active') == 'on'
+        holiday.save()
+        messages.success(request, 'Holiday updated successfully')
+        return redirect('admin_manage_holidays')
+    
+    context = {'holiday': holiday}
+    return render(request, 'admin/update_holiday.html', context)
+
+
+@login_required(login_url='/')
+@admin_required
+def DELETE_HOLIDAY(request, id):
+    """Delete public holiday"""
+    if request.method == 'POST':
+        holiday = get_object_or_404(PublicHoliday, id=id)
+        holiday.delete()
+        messages.success(request, 'Holiday deleted successfully')
+    return redirect('admin_manage_holidays')
+
+
+@login_required(login_url='/')
+@admin_required
+def MANAGE_EVENTS(request):
+    """Manage calendar events"""
+    from datetime import date
+    
+    if request.method == "POST":
+        title = request.POST.get('title')
+        description = request.POST.get('description', '')
+        event_date = request.POST.get('event_date')
+        event_type = request.POST.get('event_type', 'other')
+        location = request.POST.get('location', '')
+        is_all_day = request.POST.get('is_all_day') == 'on'
+        start_time = request.POST.get('start_time') or None
+        end_time = request.POST.get('end_time') or None
+        
+        CalendarEvent.objects.create(
+            title=title,
+            description=description,
+            event_date=event_date,
+            event_type=event_type,
+            location=location,
+            is_all_day=is_all_day,
+            start_time=start_time,
+            end_time=end_time,
+            created_by=request.user
+        )
+        messages.success(request, 'Calendar event added successfully')
+        return redirect('admin_manage_events')
+    
+    current_year = date.today().year
+    events = CalendarEvent.objects.all().order_by('event_date', 'start_time')
+    
+    # Statistics
+    total_events = events.count()
+    upcoming_events = events.filter(event_date__gte=date.today()).count()
+    
+    context = {
+        'events': events,
+        'current_year': current_year,
+        'total_events': total_events,
+        'upcoming_events': upcoming_events,
+    }
+    return render(request, 'admin/manage_events.html', context)
+
+
+@login_required(login_url='/')
+@admin_required
+def UPDATE_EVENT(request, id):
+    """Update calendar event"""
+    event = get_object_or_404(CalendarEvent, id=id)
+    
+    if request.method == "POST":
+        event.title = request.POST.get('title')
+        event.description = request.POST.get('description', '')
+        event.event_date = request.POST.get('event_date')
+        event.event_type = request.POST.get('event_type', 'other')
+        event.location = request.POST.get('location', '')
+        event.is_all_day = request.POST.get('is_all_day') == 'on'
+        event.is_active = request.POST.get('is_active') == 'on'
+        event.start_time = request.POST.get('start_time') or None
+        event.end_time = request.POST.get('end_time') or None
+        event.save()
+        messages.success(request, 'Event updated successfully')
+        return redirect('admin_manage_events')
+    
+    context = {'event': event}
+    return render(request, 'admin/update_event.html', context)
+
+
+@login_required(login_url='/')
+@admin_required
+def DELETE_EVENT(request, id):
+    """Delete calendar event"""
+    if request.method == 'POST':
+        event = get_object_or_404(CalendarEvent, id=id)
+        event.delete()
+        messages.success(request, 'Event deleted successfully')
+    return redirect('admin_manage_events')

@@ -13,7 +13,7 @@
             </div>
             <div>
                 <h2 style="margin: 0; font-size: 1.75rem; font-weight: 600;">User Management</h2>
-                <p style="margin: 0.25rem 0 0 0; opacity: 0.9; font-size: 0.875rem;">Create, edit, and assign roles to users</p>
+                <p style="margin: 0.25rem 0 0 0; opacity: 0.9; font-size: 0.875rem;">Create/edit user accounts and manage roles. Note: staff profiles (employee details) are managed in <strong>Manage Staff</strong> by HR — use the option below only if you need to create a staff account plus a minimal staff profile from Admin.</p>
             </div>
         </div>
         <a href="{% url 'admin_home' %}" style="color: var(--white); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.1); border-radius: var(--radius-md); transition: background 0.2s ease;">
@@ -118,6 +118,20 @@
                 {% endfor %}
             </select>
         </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+                <label style="display:flex; align-items:center; gap:0.5rem;">
+                    <input type="checkbox" id="create_staff_profile" name="create_staff_profile" {% if edit_user and edit_user.user_type == '2' and edit_user.staff %}checked{% endif %} />
+                    <span style="font-size:0.95rem; color:var(--text-secondary)">Also create a minimal staff profile (employee record)</span>
+                </label>
+            </div>
+
+            <div id="staff-extras" style="display: {% if edit_user and edit_user.user_type == '2' and edit_user.staff %}block{% else %}none{% endif %};">
+                <label for="employee_id">Employee ID</label>
+                <input type="text" id="employee_id" name="employee_id" value="{% if edit_user and edit_user.staff %}{{ edit_user.staff.employee_id }}{% endif %}" class="form-input" />
+            </div>
+        </div>
         
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
             <div class="form-group">
@@ -127,7 +141,7 @@
             
             <div class="form-group" style="display: flex; align-items: center; padding-top: 1.5rem;">
                 <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                    <input type="checkbox" name="is_active" {% if edit_user and edit_user.is_active or not edit_user %}checked{% endif %} 
+                    <input type="checkbox" name="is_active" {% if edit_user and edit_user.is_active or not edit_user %}checked{% endif %}
                            style="width: 18px; height: 18px; cursor: pointer;">
                     <span>Active Account</span>
                 </label>
@@ -142,6 +156,28 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const userTypeSelect = document.getElementById('user_type');
+    const departmentGroup = document.getElementById('department-group');
+    const createStaffCheckbox = document.getElementById('create_staff_profile');
+    const staffExtras = document.getElementById('staff-extras');
+
+    function updateVisibility(){
+        if (userTypeSelect && departmentGroup){
+            departmentGroup.style.display = (userTypeSelect.value === '3') ? 'block' : 'none';
+        }
+        if (createStaffCheckbox && staffExtras){
+            staffExtras.style.display = createStaffCheckbox.checked ? 'block' : 'none';
+        }
+    }
+
+    if (userTypeSelect) userTypeSelect.addEventListener('change', updateVisibility);
+    if (createStaffCheckbox) createStaffCheckbox.addEventListener('change', updateVisibility);
+    updateVisibility();
+});
+</script>
 
 <!-- Filter Section -->
 <div class="modern-card" style="margin-bottom: 2rem;">
@@ -176,7 +212,7 @@
     </h3>
     
     {% if users %}
-        <div style="overflow-x: auto;">
+        <div class="table-container" style="overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--medium-gray);">
             <table class="modern-table" id="usersTable" style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: var(--light-gray);">
@@ -231,6 +267,8 @@
                                    title="Edit">
                                     <i class="material-icons" style="font-size: 18px;">edit</i>
                                 </a>
+                                <a href="{% url 'admin_generate_reset' user_obj.id %}" 
+                                   class="btn-secondary" style="padding: 0.5rem 1rem; margin-left:0.5rem;">Generate Reset Link</a>
                                 {% if user_obj.is_active %}
                                 <a href="{% url 'admin_deactivate_user' user_obj.id %}" 
                                    style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: var(--radius-md); text-decoration: none; font-size: 0.875rem; transition: all 0.2s ease;" 

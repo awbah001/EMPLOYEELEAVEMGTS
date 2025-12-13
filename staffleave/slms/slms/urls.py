@@ -4,8 +4,13 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
-from .import views, staffviews, adminviews, departmentheadviews, hrviews, superadminviews
-from .password_reset_views import CustomPasswordResetView
+from . import views, staffviews, adminviews, departmentheadviews, hrviews, superadminviews
+from .password_reset_views import (
+    CustomPasswordResetConfirmView,
+    OTPPasswordResetNewPasswordView,
+    OTPPasswordResetVerifyView,
+    OTPPasswordResetView,
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,19 +35,26 @@ urlpatterns = [
     path('Admin/Staff/Disapprove_Leave/<str:id>',adminviews.STAFF_DISAPPROVE_LEAVE,name='staff_disapprove_leave'),
 
     # Admin Panel (includes all super admin functionality)
+    path('Admin/Calendar', adminviews.ADMIN_CALENDAR, name='admin_calendar'),
     path('Admin/Users', adminviews.MANAGE_USERS, name='admin_manage_users'),
     path('Admin/Users/Create', adminviews.CREATE_USER, name='admin_create_user'),
     path('Admin/Users/Edit/<str:id>', adminviews.EDIT_USER, name='admin_edit_user'),
     path('Admin/Users/Deactivate/<str:id>', adminviews.DEACTIVATE_USER, name='admin_deactivate_user'),
     path('Admin/Users/Activate/<str:id>', adminviews.ACTIVATE_USER, name='admin_activate_user'),
     path('Admin/Users/Delete/<str:id>', adminviews.DELETE_USER, name='admin_delete_user'),
+    path('Admin/Users/GenerateReset/<str:id>', adminviews.GENERATE_PASSWORD_RESET_LINK, name='admin_generate_reset'),
     path('Admin/Roles/Assign', adminviews.ASSIGN_ROLES, name='admin_assign_roles'),
     path('Admin/Departments', adminviews.MANAGE_DEPARTMENTS, name='admin_manage_departments'),
     path('Admin/Departments/Update/<str:id>', adminviews.UPDATE_DEPARTMENT, name='admin_update_department'),
     path('Admin/Departments/Delete/<str:id>', adminviews.DELETE_DEPARTMENT, name='admin_delete_department'),
     path('Admin/Settings', adminviews.SYSTEM_SETTINGS, name='admin_system_settings'),
     path('Admin/Settings/Update/<str:id>', adminviews.UPDATE_SETTING, name='admin_update_setting'),
-    path('Admin/Auth/Config', adminviews.AUTH_CONFIGURATION, name='admin_auth_config'),
+    path('Admin/Holidays', adminviews.MANAGE_HOLIDAYS, name='admin_manage_holidays'),
+    path('Admin/Holidays/Update/<str:id>', adminviews.UPDATE_HOLIDAY, name='admin_update_holiday'),
+    path('Admin/Holidays/Delete/<str:id>', adminviews.DELETE_HOLIDAY, name='admin_delete_holiday'),
+    path('Admin/Events', adminviews.MANAGE_EVENTS, name='admin_manage_events'),
+    path('Admin/Events/Update/<str:id>', adminviews.UPDATE_EVENT, name='admin_update_event'),
+    path('Admin/Events/Delete/<str:id>', adminviews.DELETE_EVENT, name='admin_delete_event'),
     
     # Legacy Super Admin routes (redirect to admin routes for backward compatibility)
     path('SuperAdmin/Home', adminviews.HOME, name='superadmin_home'),
@@ -58,7 +70,6 @@ urlpatterns = [
     path('SuperAdmin/Departments/Delete/<str:id>', adminviews.DELETE_DEPARTMENT, name='superadmin_delete_department'),
     path('SuperAdmin/Settings', adminviews.SYSTEM_SETTINGS, name='superadmin_system_settings'),
     path('SuperAdmin/Settings/Update/<str:id>', adminviews.UPDATE_SETTING, name='superadmin_update_setting'),
-    path('SuperAdmin/Auth/Config', adminviews.AUTH_CONFIGURATION, name='superadmin_auth_config'),
 
     # Department Head Panel
     path('DepartmentHead/Home', departmentheadviews.HOME, name='dh_home'),
@@ -70,6 +81,7 @@ urlpatterns = [
 
     # HR Panel
     path('HR/Home', hrviews.HOME, name='hr_home'),
+    path('HR/Calendar', hrviews.HR_CALENDAR, name='hr_calendar'),
     path('HR/Staff/Manage', hrviews.MANAGE_STAFF, name='hr_manage_staff'),
     path('HR/Staff/Add', hrviews.ADD_STAFF, name='hr_add_staff'),
     path('HR/Staff/Update/<str:id>', hrviews.UPDATE_STAFF, name='hr_update_staff'),
@@ -93,18 +105,21 @@ urlpatterns = [
     path('Staff/Leaveview', staffviews.STAFF_LEAVE_VIEW, name='staff_leave_view'),
     path('Staff/Leave/Balance', staffviews.VIEW_LEAVE_BALANCE, name='staff_leave_balance'),
     path('Staff/Leave/Track/<str:leave_id>', staffviews.TRACK_LEAVE_STATUS, name='staff_track_leave'),
+    path('Staff/Calendar', staffviews.STAFF_CALENDAR, name='staff_calendar'),
     
     #profile path
     path('Profile', views.PROFILE, name='profile'),
     path('Profile/update', views.PROFILE_UPDATE, name='profile_update'),
     path('Password', views.CHANGE_PASSWORD, name='change_password'),
 
-    # Password Reset URLs
-    path('password-reset/', CustomPasswordResetView.as_view(), name='password_reset'),
-    path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='registration/password_reset_done.html'), name='password_reset_done'),
-    path('password-reset-confirm/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='registration/password_reset_confirm.html'), name='password_reset_confirm'),
+    # Password Reset URLs (OTP for users, token link still supported for admin-issued links)
+    path('password-reset/', OTPPasswordResetView.as_view(), name='password_reset'),
+    path('password-reset/verify/', OTPPasswordResetVerifyView.as_view(), name='password_reset_verify'),
+    path('password-reset/new-password/', OTPPasswordResetNewPasswordView.as_view(), name='password_reset_new_password'),
+    path('password-reset/done/', OTPPasswordResetVerifyView.as_view(), name='password_reset_done'),
+    path('password-reset-confirm/<uidb64>/<token>/', CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('password-reset-complete/', auth_views.PasswordResetCompleteView.as_view(template_name='registration/password_reset_complete.html'), name='password_reset_complete'),
 
+    # Password reset and media URLs
 
-
-] + static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
+    ] + static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)

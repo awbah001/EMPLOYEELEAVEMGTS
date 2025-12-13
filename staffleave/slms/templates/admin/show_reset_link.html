@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Password Reset Link - Admin{% endblock %}
+
+{% block content %}
+<div class="modern-card">
+    <h2 style="margin:0 0 1rem 0;">Password Reset Link</h2>
+    <p style="margin:0 0 1rem 0; color:var(--text-secondary);">One-time password reset URL for <strong>{{ user.email }}</strong>. This link expires per system settings.</p>
+
+    <div style="background:var(--light-gray); border-radius:8px; padding:1rem; margin-bottom:1rem; word-break:break-all;">
+        <code style="display:block; padding:0.5rem; border-radius:6px; background:#fff; border:1px solid var(--medium-gray);">{{ reset_url }}</code>
+    </div>
+
+    <div style="display:flex; gap:0.5rem;">
+        <button class="btn-primary" onclick="navigator.clipboard.writeText('{{ reset_url }}')">Copy link</button>
+        <a href="{% url 'admin_manage_users' %}" class="btn-secondary">Back to users</a>
+    </div>
+
+    <div style="margin-top:1rem; font-size:0.9rem; color:var(--text-secondary);">Note: link expires when token becomes invalid (default Django timeout). Use with care — only share with the account owner.</div>
+</div>
+{% endblock %}

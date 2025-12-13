@@ -151,3 +151,12 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Password Reset Settings
 PASSWORD_RESET_TIMEOUT = 86400  # 24 hours in seconds
+
+# Configure authentication backends
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'slmsapp.EmailBackEnd.EmailBackEnd',
+]
+
+LOGIN_REDIRECT_URL = '/Index'
+LOGOUT_REDIRECT_URL = '/'

@@ -11,6 +11,10 @@
         <meta name="keywords" content="staff,leave,management,dashboard" />
         <meta name="author" content="HarmonyLeave" />
         
+        <!-- Favicon -->
+        <link rel="icon" type="image/x-icon" href="{% static 'assets/images/favicon.ico' %}">
+        <link rel="shortcut icon" type="image/x-icon" href="{% static 'assets/images/favicon.ico' %}">
+        
         <!-- Google Fonts -->
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <!-- Material Icons - Multiple sources for better loading -->
@@ -161,10 +165,10 @@
         
         <!-- Modern Header -->
         <header class="modern-header">
-            <div class="header-brand">
+            <a href="{% if user.user_type == '1' %}{% url 'admin_home' %}{% elif user.user_type == '2' %}{% url 'staff_home' %}{% elif user.user_type == '3' %}{% url 'dh_home' %}{% elif user.user_type == '4' %}{% url 'hr_home' %}{% else %}{% url 'index' %}{% endif %}" class="header-brand" style="text-decoration: none; color: inherit; display: flex; align-items: center; cursor: pointer;">
                 <img src="{% static 'assets/images/lms.png' %}" alt="HarmonyLeave (E/SLMS)" style="width: 40px; height: 40px; margin-right: 0.75rem; border-radius: 50%; object-fit: cover;">
                 HarmonyLeave (E/SLMS)
-            </div>
+            </a>
             
             <div class="header-actions">
                 {% if user.user_type == '1' %}
@@ -205,6 +209,11 @@
                     </div>
                 {% endif %}
                 
+                <!-- Theme Toggle -->
+                <button id="themeToggle" title="Toggle theme" aria-label="Toggle theme" style="background: none; border: none; cursor: pointer; padding: 0.5rem; border-radius: 50%; transition: background 0.2s ease;">
+                    <i class="material-icons" id="themeIcon">dark_mode</i>
+                </button>
+
                 <!-- User Profile -->
                 <div class="user-profile" style="display: flex; align-items: center; gap: 0.75rem;">
                     {% if user.profile_pic %}
@@ -239,21 +248,22 @@
                     {% if user.user_type == '1' %}
                         <!-- Admin Navigation -->
                         <li><a href="{% url 'admin_home' %}" class="nav-link"><i class="material-icons">dashboard</i>Dashboard</a></li>
+                        <li><a href="{% url 'admin_calendar' %}" class="nav-link"><i class="material-icons">calendar_today</i>Calendar</a></li>
                         <li><a href="{% url 'profile' %}" class="nav-link"><i class="material-icons">person</i>My Profile</a></li>
                         <li><a href="{% url 'change_password' %}" class="nav-link"><i class="material-icons">lock</i>Change Password</a></li>
                         
                         <!-- User Management Section -->
                         <li style="margin-top: 1.5rem;">
-                            <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">User Management</div>
+                            <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;"></div>
                         </li>
-                        <li><a href="{% url 'admin_manage_users' %}" class="nav-link"><i class="material-icons">people</i>Manage Users</a></li>
+                        <!-- Manage Users removed for Admin UI to avoid duplication. Admins can add users and view all users from below. -->
                         
                         <!-- Staff Management Section -->
                         <li style="margin-top: 1.5rem;">
                             <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Staff Management</div>
                         </li>
-                        <li><a href="{% url 'add_staff' %}" class="nav-link"><i class="material-icons">person_add</i>Add Staff</a></li>
-                        <li><a href="{% url 'view_staff' %}" class="nav-link"><i class="material-icons">people</i>View Staff</a></li>
+                        <li><a href="{% url 'admin_create_user' %}" class="nav-link"><i class="material-icons">person_add</i>Add User</a></li>
+                        <li><a href="{% url 'view_staff' %}" class="nav-link"><i class="material-icons">people</i>View Users</a></li>
                         <li><a href="{% url 'staff_leave_view_admin' %}" class="nav-link"><i class="material-icons">event_note</i>Leave Requests</a></li>
                         
                         <!-- System Management Section -->
@@ -262,7 +272,8 @@
                         </li>
                         <li><a href="{% url 'admin_manage_departments' %}" class="nav-link"><i class="material-icons">business</i>Departments</a></li>
                         <li><a href="{% url 'admin_system_settings' %}" class="nav-link"><i class="material-icons">settings</i>System Settings</a></li>
-                        <li><a href="{% url 'admin_auth_config' %}" class="nav-link"><i class="material-icons">lock</i>Auth Configuration</a></li>
+                        <li><a href="{% url 'admin_manage_holidays' %}" class="nav-link"><i class="material-icons">celebration</i>Manage Holidays</a></li>
+                        <li><a href="{% url 'admin_manage_events' %}" class="nav-link"><i class="material-icons">event</i>Manage Events</a></li>
                         
                     {% elif user.user_type == '3' %}
                         <!-- Department Head Navigation -->
@@ -281,6 +292,7 @@
                     {% elif user.user_type == '4' %}
                         <!-- HR Navigation -->
                         <li><a href="{% url 'hr_home' %}" class="nav-link"><i class="material-icons">dashboard</i>Dashboard</a></li>
+                        <li><a href="{% url 'hr_calendar' %}" class="nav-link"><i class="material-icons">calendar_today</i>Calendar</a></li>
                         <li><a href="{% url 'profile' %}" class="nav-link"><i class="material-icons">person</i>My Profile</a></li>
                         <li><a href="{% url 'change_password' %}" class="nav-link"><i class="material-icons">lock</i>Change Password</a></li>
                         
@@ -309,6 +321,7 @@
                     {% elif user.user_type == '2' %}
                         <!-- Staff Navigation -->
                         <li><a href="{% url 'staff_home' %}" class="nav-link"><i class="material-icons">dashboard</i>Dashboard</a></li>
+                        <li><a href="{% url 'staff_calendar' %}" class="nav-link"><i class="material-icons">calendar_today</i>Calendar</a></li>
                         <li><a href="{% url 'profile' %}" class="nav-link"><i class="material-icons">person</i>My Profile</a></li>
                         <li><a href="{% url 'change_password' %}" class="nav-link"><i class="material-icons">lock</i>Change Password</a></li>
                         
@@ -377,6 +390,40 @@
             
             // Active navigation link highlighting
             document.addEventListener('DOMContentLoaded', function() {
+                // Theme setup - apply persisted theme or system preference
+                const THEME_KEY = 'slms_theme';
+                const themeIcon = document.getElementById('themeIcon');
+
+                function applyTheme(t) {
+                    if (t === 'dark') {
+                        document.body.classList.add('dark-theme');
+                        if (themeIcon) themeIcon.textContent = 'dark_mode';
+                    } else {
+                        document.body.classList.remove('dark-theme');
+                        if (themeIcon) themeIcon.textContent = 'light_mode';
+                    }
+                }
+
+                // Initialize
+                const saved = localStorage.getItem(THEME_KEY);
+                let initialTheme = saved;
+                if (!initialTheme) {
+                    // Respect OS preference if no setting saved
+                    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    initialTheme = prefersDark ? 'dark' : 'light';
+                }
+                applyTheme(initialTheme);
+
+                // Toggle handler
+                const toggle = document.getElementById('themeToggle');
+                if (toggle) {
+                    toggle.addEventListener('click', function(e) {
+                        const current = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+                        const next = current === 'dark' ? 'light' : 'dark';
+                        localStorage.setItem(THEME_KEY, next);
+                        applyTheme(next);
+                    });
+                }
                 const currentPath = window.location.pathname;
                 const navLinks = document.querySelectorAll('.nav-link');
                 

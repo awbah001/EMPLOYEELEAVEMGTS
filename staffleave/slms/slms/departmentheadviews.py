@@ -2,9 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
+from calendar import monthrange
 from slmsapp.models import (
-    CustomUser, Staff, Staff_Leave, Department, DepartmentHead, LeaveType
+    CustomUser, Staff, Staff_Leave, Department, DepartmentHead, LeaveType, PublicHoliday, CalendarEvent
 )
 from .decorators import department_head_required
 
@@ -35,6 +36,13 @@ def HOME(request):
             created_at__month=current_month,
             created_at__year=current_year
         ).count()
+        # Rejected this month for department
+        rejected_this_month = Staff_Leave.objects.filter(
+            staff_id__department=department,
+            status=2,
+            created_at__month=current_month,
+            created_at__year=current_year
+        ).count()
         
         context = {
             'department': department,
@@ -42,6 +50,7 @@ def HOME(request):
             'pending_leaves': pending_leaves[:10],  # Latest 10
             'pending_count': pending_leaves.count(),
             'approved_this_month': approved_this_month,
+            'rejected_this_month': rejected_this_month,
         }
         return render(request, 'departmenthead/home.html', context)
     except DepartmentHead.DoesNotExist:
@@ -154,10 +163,9 @@ def DEPARTMENTAL_CALENDAR(request):
         dept_head = DepartmentHead.objects.get(admin=request.user)
         department = dept_head.department
         
-        # Get all approved leaves from department staff
-        approved_leaves = Staff_Leave.objects.filter(
-            staff_id__department=department,
-            status=1
+        # Get ALL leaves (approved, pending, rejected) from department staff only
+        department_leaves = Staff_Leave.objects.filter(
+            staff_id__department=department
         ).order_by('from_date')
         
         # Get current month/year or from request
@@ -165,14 +173,30 @@ def DEPARTMENTAL_CALENDAR(request):
         month = int(request.GET.get('month', date.today().month))
         
         # Filter leaves for the selected month
-        month_leaves = approved_leaves.filter(
+        month_leaves = department_leaves.filter(
             from_date__year=year,
             from_date__month=month
+        )
+        
+        # Get public holidays for the month
+        public_holidays = PublicHoliday.objects.filter(
+            date__year=year,
+            date__month=month,
+            is_active=True
+        )
+        
+        # Get calendar events for the month
+        calendar_events = CalendarEvent.objects.filter(
+            event_date__year=year,
+            event_date__month=month,
+            is_active=True
         )
         
         context = {
             'department': department,
             'approved_leaves': month_leaves,
+            'public_holidays': public_holidays,
+            'calendar_events': calendar_events,
             'current_year': year,
             'current_month': month,
         }

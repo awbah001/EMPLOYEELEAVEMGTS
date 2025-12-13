@@ -6,14 +6,14 @@
 {% block content %}
 <!-- Dashboard Header -->
 <div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
-    <div style="display: flex; align-items: center; gap: 1rem;">
+    <a href="{% url 'admin_home' %}" style="display: flex; align-items: center; gap: 1rem; text-decoration: none; color: inherit; cursor: pointer;">
         <div style="width: 60px; height: 60px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 4px;">
             <img src="{% static 'assets/images/lms.png' %}" alt="HarmonyLeave (E/SLMS)" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover;">
         </div>
         <div>
             <h2 style="margin: 0; font-size: 1.75rem; font-weight: 600;">Welcome {{ user.first_name }} {{ user.last_name }}!!!</h2>
         </div>
-    </div>
+    </a>
 </div>
 
 <!-- Statistics Cards -->
@@ -31,8 +31,8 @@
                     <i class="material-icons" style="font-size: 1.5rem;">people</i>
                 </div>
             </div>
-            <a href="{% url 'admin_manage_users' %}" style="color: rgba(255, 255, 255, 0.9); text-decoration: none; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; transition: opacity 0.2s ease;">
-                Manage users
+            <a href="{% url 'view_staff' %}" style="color: rgba(255, 255, 255, 0.9); text-decoration: none; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; transition: opacity 0.2s ease;">
+                View users
                 <i class="material-icons" style="font-size: 1rem;">arrow_forward</i>
             </a>
         </div>
@@ -123,14 +123,14 @@
     </h3>
     
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-        <!-- Manage Users -->
-        <a href="{% url 'admin_manage_users' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(45, 90, 160, 0.05); border: 1px solid rgba(45, 90, 160, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
+        <!-- View Users -->
+        <a href="{% url 'view_staff' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(45, 90, 160, 0.05); border: 1px solid rgba(45, 90, 160, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
             <div style="width: 40px; height: 40px; background: var(--gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                 <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">people</i>
             </div>
             <div>
-                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Manage Users</div>
-                <div style="font-size: 0.875rem; color: var(--text-secondary);">Create, edit, and assign roles to users</div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">View Users</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">See all users and edit account details</div>
             </div>
         </a>
         
@@ -156,36 +156,25 @@
             </div>
         </a>
         
-        <!-- Auth Configuration -->
-        <a href="{% url 'admin_auth_config' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(236, 72, 153, 0.05); border: 1px solid rgba(236, 72, 153, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
-            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">lock</i>
-            </div>
-            <div>
-                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Auth Config</div>
-                <div style="font-size: 0.875rem; color: var(--text-secondary);">Configure authentication</div>
-            </div>
-        </a>
-        
-        <!-- Add Staff -->
-        <a href="{% url 'add_staff' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(45, 90, 160, 0.05); border: 1px solid rgba(45, 90, 160, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
+        <!-- Add User -->
+        <a href="{% url 'admin_create_user' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(45, 90, 160, 0.05); border: 1px solid rgba(45, 90, 160, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
             <div style="width: 40px; height: 40px; background: var(--gradient-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                 <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">person_add</i>
             </div>
             <div>
-                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Add New Staff</div>
-                <div style="font-size: 0.875rem; color: var(--text-secondary);">Register new employee</div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Add New User</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">Create a new account</div>
             </div>
         </a>
         
-        <!-- Manage Staff -->
+        <!-- User Directory -->
         <a href="{% url 'view_staff' %}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1); border-radius: var(--radius-lg); text-decoration: none; transition: all 0.2s ease;">
             <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #10b981 0%, #047857 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                 <i class="material-icons" style="color: var(--white); font-size: 1.25rem;">manage_accounts</i>
             </div>
             <div>
-                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Manage Staff</div>
-                <div style="font-size: 0.875rem; color: var(--text-secondary);">View and edit staff details</div>
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">User Directory</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">Browse and manage users</div>
             </div>
         </a>
         
@@ -237,10 +226,167 @@
 </div>
 
 <style>
+/* Calendar Styles */
+.calendar-card {
+    background: #ffffff;
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    padding: 1.5rem;
+}
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+.calendar-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+.calendar-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+}
+.calendar-weekdays {
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-align: center;
+}
+.calendar-weekdays div {
+    padding: 0.35rem 0;
+}
+.day-cell {
+    background: #f8fafc;
+    border-radius: 12px;
+    min-height: 86px;
+    padding: 10px;
+    border: 1px solid transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+.day-cell:hover {
+    border-color: rgba(45, 90, 160, 0.2);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
+}
+.day-cell.empty {
+    background: transparent;
+    border: none;
+}
+.day-number {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.day-cell.today {
+    border-color: #facc15;
+    background: #fffbeb;
+}
+.day-cell.today .day-number {
+    color: #d97706;
+}
+.day-cell.has-leave {
+    border-color: rgba(45, 90, 160, 0.2);
+    background: #eef2ff;
+}
+.day-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: #ffffff;
+    border: 1px solid var(--medium-gray);
+}
+.day-chip.status-approved {
+    border-color: rgba(16, 185, 129, 0.35);
+    color: #0f9d74;
+    background: rgba(16, 185, 129, 0.08);
+}
+.day-chip.status-pending {
+    border-color: rgba(249, 115, 22, 0.35);
+    color: #d97706;
+    background: rgba(249, 115, 22, 0.08);
+}
+.day-chip.status-rejected {
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #b91c1c;
+    background: rgba(239, 68, 68, 0.08);
+}
+.calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    background: var(--medium-gray);
+}
+.legend-dot.status-approved { background: #10b981; }
+.legend-dot.status-pending { background: #f59e0b; }
+.legend-dot.status-rejected { background: #ef4444; }
+.legend-dot.holiday-dot { background: #f97316; }
+.legend-dot.event-dot { background: #3b82f6; }
+.legend-dot.today-dot { background: #facc15; }
+.day-cell.has-holiday {
+    border-color: rgba(249, 115, 22, 0.3);
+    background: rgba(249, 115, 22, 0.05);
+}
+.day-chip.holiday-chip {
+    border-color: rgba(249, 115, 22, 0.35);
+    color: #f97316;
+    background: rgba(249, 115, 22, 0.1);
+    padding: 4px 6px;
+}
+.day-chip.event-chip {
+    border-color: rgba(59, 130, 246, 0.35);
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+    padding: 4px 6px;
+}
+.day-cell.has-events {
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
 /* Hover effects for quick action cards */
 .modern-card a:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-medium);
+}
+
+/* Dashboard header logo and name hover effect */
+.modern-card a[href*="admin_home"] {
+    transition: opacity 0.2s ease;
+}
+
+.modern-card a[href*="admin_home"]:hover {
+    opacity: 0.9;
+}
+
+.modern-card a[href*="admin_home"]:hover img {
+    transform: scale(1.05);
+    transition: transform 0.2s ease;
 }
 
 /* Statistics card hover effects */
@@ -262,6 +408,15 @@
     
     .modern-card [style*="font-size: 2.5rem"] {
         font-size: 2rem !important;
+    }
+    
+    .day-cell {
+        min-height: 76px;
+        padding: 8px;
+    }
+    .day-chip {
+        font-size: 0.75rem;
+        padding: 5px 8px;
     }
 }
 </style>

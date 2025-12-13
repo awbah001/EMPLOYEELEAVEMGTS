@@ -4,11 +4,13 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Sum, Count
 from django.http import HttpResponse, JsonResponse
 from datetime import datetime, date, timedelta
+from calendar import monthrange
 import csv
 from slmsapp.models import (
     CustomUser, Staff, Staff_Leave, Department, LeaveType, 
-    LeaveEntitlement, LeaveBalance, PublicHoliday, SystemSettings
+    LeaveEntitlement, LeaveBalance, PublicHoliday, SystemSettings, CalendarEvent
 )
+from .auth_utils import validate_password
 from .decorators import hr_required, admin_or_hr_required
 
 
@@ -20,6 +22,7 @@ def HOME(request):
     total_leaves = Staff_Leave.objects.count()
     pending_leaves = Staff_Leave.objects.filter(status=0).count()
     approved_leaves = Staff_Leave.objects.filter(status=1).count()
+    rejected_leaves = Staff_Leave.objects.filter(status=2).count()
     
     # Get leaves pending HR approval
     hr_pending = Staff_Leave.objects.filter(
@@ -31,6 +34,7 @@ def HOME(request):
         'total_leaves': total_leaves,
         'pending_leaves': pending_leaves,
         'approved_leaves': approved_leaves,
+        'rejected_leaves': rejected_leaves,
         'hr_pending': hr_pending,
     }
     return render(request, 'hr/home.html', context)
@@ -90,6 +94,10 @@ def ADD_STAFF(request):
             user_type=user_role,
             username=username
         )
+        ok, msg = validate_password(password)
+        if not ok:
+            messages.warning(request, msg)
+            return redirect('hr_add_staff')
         user.set_password(password)
         user.save()
 
@@ -163,6 +171,10 @@ def UPDATE_STAFF(request, id):
         user.email = email
         user.username = username
         if password:
+            ok, msg = validate_password(password)
+            if not ok:
+                messages.warning(request, msg)
+                return redirect('hr_update_staff', id=id)
             user.set_password(password)
         if profile_pic:
             user.profile_pic = profile_pic
@@ -593,3 +605,45 @@ def DELETE_ENTITLEMENT(request, id):
         messages.success(request, 'Leave entitlement deleted successfully')
     return redirect('hr_set_entitlements')
 
+
+@login_required(login_url='/')
+@hr_required
+def HR_CALENDAR(request):
+    """View all leaves calendar for HR"""
+    # Get all approved leaves across all departments
+    approved_leaves = Staff_Leave.objects.filter(
+        status=1
+    ).order_by('from_date')
+    
+    # Get current month/year or from request
+    year = int(request.GET.get('year', date.today().year))
+    month = int(request.GET.get('month', date.today().month))
+    
+    # Filter leaves for the selected month
+    month_leaves = approved_leaves.filter(
+        from_date__year=year,
+        from_date__month=month
+    )
+    
+    # Get public holidays for the month
+    public_holidays = PublicHoliday.objects.filter(
+        date__year=year,
+        date__month=month,
+        is_active=True
+    )
+    
+    # Get calendar events for the month
+    calendar_events = CalendarEvent.objects.filter(
+        event_date__year=year,
+        event_date__month=month,
+        is_active=True
+    )
+    
+    context = {
+        'approved_leaves': month_leaves,
+        'public_holidays': public_holidays,
+        'calendar_events': calendar_events,
+        'current_year': year,
+        'current_month': month,
+    }
+    return render(request, 'hr/calendar.html', context)

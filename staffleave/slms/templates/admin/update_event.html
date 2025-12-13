@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Update Event - Admin Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="font-size: 1.5rem;">edit</i>
+            </div>
+            <div>
+                <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Update Event</h2>
+                <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Edit event information</p>
+            </div>
+        </div>
+        <a href="{% url 'admin_manage_events' %}" style="color: var(--white); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.1); border-radius: var(--radius-md); transition: background 0.2s ease;">
+            <i class="material-icons" style="font-size: 1.25rem;">arrow_back</i>
+            Back
+        </a>
+    </div>
+</div>
+
+<!-- Messages -->
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+            <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">error_outline</i>
+                {{message}}
+            </div>
+        {% elif message.tags == 'success' %}
+            <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">check_circle</i>
+                {{message}}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<div class="modern-card" style="max-width: 600px; margin: 0 auto;">
+    <form method="POST" action="{% url 'admin_update_event' event.id %}">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="title">Event Title *</label>
+            <input type="text" id="title" name="title" class="form-input" value="{{ event.title }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="event_date">Event Date *</label>
+            <input type="date" id="event_date" name="event_date" class="form-input" value="{{ event.event_date|date:'Y-m-d' }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="event_type">Event Type *</label>
+            <select id="event_type" name="event_type" class="form-input" required>
+                <option value="meeting" {% if event.event_type == 'meeting' %}selected{% endif %}>Meeting</option>
+                <option value="training" {% if event.event_type == 'training' %}selected{% endif %}>Training</option>
+                <option value="workshop" {% if event.event_type == 'workshop' %}selected{% endif %}>Workshop</option>
+                <option value="announcement" {% if event.event_type == 'announcement' %}selected{% endif %}>Announcement</option>
+                <option value="deadline" {% if event.event_type == 'deadline' %}selected{% endif %}>Deadline</option>
+                <option value="other" {% if event.event_type == 'other' %}selected{% endif %}>Other</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="location">Location</label>
+            <input type="text" id="location" name="location" class="form-input" value="{{ event.location|default:'' }}" placeholder="e.g., Conference Room A">
+        </div>
+        
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="is_all_day" name="is_all_day" style="width: auto;" {% if event.is_all_day %}checked{% endif %} onchange="toggleTimeFields()">
+                <span>All Day Event</span>
+            </label>
+        </div>
+        
+        <div class="form-group" id="time_fields" style="display: {% if event.is_all_day %}none{% else %}block{% endif %};">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label for="start_time">Start Time</label>
+                    <input type="time" id="start_time" name="start_time" class="form-input" value="{% if event.start_time %}{{ event.start_time|time:'H:i' }}{% endif %}">
+                </div>
+                <div>
+                    <label for="end_time">End Time</label>
+                    <input type="time" id="end_time" name="end_time" class="form-input" value="{% if event.end_time %}{{ event.end_time|time:'H:i' }}{% endif %}">
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" class="form-input" rows="3">{{ event.description|default:'' }}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" name="is_active" style="width: auto;" {% if event.is_active %}checked{% endif %}>
+                <span>Active</span>
+            </label>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-primary" style="flex: 1;">
+                <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">save</i>
+                Update Event
+            </button>
+            <a href="{% url 'admin_manage_events' %}" class="btn-secondary" style="flex: 1; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">cancel</i>
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+function toggleTimeFields() {
+    const isAllDay = document.getElementById('is_all_day').checked;
+    const timeFields = document.getElementById('time_fields');
+    timeFields.style.display = isAllDay ? 'none' : 'block';
+    if (isAllDay) {
+        document.getElementById('start_time').value = '';
+        document.getElementById('end_time').value = '';
+    }
+}
+</script>
+{% endblock %}
+

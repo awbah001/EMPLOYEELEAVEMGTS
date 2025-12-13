@@ -182,6 +182,39 @@ class PublicHoliday(models.Model):
         return f"{self.name} - {self.date}"
 
 
+class CalendarEvent(models.Model):
+    """General calendar events that can be added by admins"""
+    EVENT_TYPE_CHOICES = [
+        ('meeting', 'Meeting'),
+        ('training', 'Training'),
+        ('workshop', 'Workshop'),
+        ('announcement', 'Announcement'),
+        ('deadline', 'Deadline'),
+        ('other', 'Other'),
+    ]
+    
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    event_date = models.DateField()
+    event_type = models.CharField(max_length=50, choices=EVENT_TYPE_CHOICES, default='other')
+    location = models.CharField(max_length=200, blank=True, null=True)
+    start_time = models.TimeField(blank=True, null=True)
+    end_time = models.TimeField(blank=True, null=True)
+    is_all_day = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_events')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Calendar Event"
+        verbose_name_plural = "Calendar Events"
+        ordering = ['event_date', 'start_time']
+
+    def __str__(self):
+        return f"{self.title} - {self.event_date}"
+
+
 class SystemSettings(models.Model):
     key = models.CharField(max_length=100, unique=True)
     value = models.TextField()
@@ -194,4 +227,4 @@ class SystemSettings(models.Model):
         verbose_name_plural = "System Settings"
 
     def __str__(self):
-        return self.key 
+        return self.key
