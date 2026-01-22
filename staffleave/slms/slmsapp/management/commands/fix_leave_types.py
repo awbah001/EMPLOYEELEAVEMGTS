@@ -4,7 +4,7 @@ Run this BEFORE running migrate if migration 0007 failed
 """
 from django.core.management.base import BaseCommand
 from django.db import connection
-from slmsapp.models import LeaveType, Staff_Leave
+from slmsapp.models import LeaveType, Employee_Leave
 
 
 class Command(BaseCommand):
@@ -13,7 +13,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write('Fixing leave types data...')
         
-        # Get all unique leave types from existing Staff_Leave records
+        # Get all unique leave types from existing Employee_Leave records
         with connection.cursor() as cursor:
             cursor.execute("SELECT DISTINCT leave_type FROM slmsapp_staff_leave WHERE leave_type IS NOT NULL AND leave_type != ''")
             rows = cursor.fetchall()
@@ -39,7 +39,7 @@ class Command(BaseCommand):
         
         # Update leave_type_name for all records
         updated_count = 0
-        for leave in Staff_Leave.objects.all():
+        for leave in Employee_Leave.objects.all():
             if leave.leave_type and isinstance(leave.leave_type, str):
                 if not leave.leave_type_name or leave.leave_type_name != leave.leave_type:
                     leave.leave_type_name = leave.leave_type
@@ -49,7 +49,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f'\nCompleted:\n'
             f'  - Created {created_count} new LeaveType records\n'
-            f'  - Updated {updated_count} Staff_Leave records with leave_type_name'
+            f'  - Updated {updated_count} Employee_Leave records with leave_type_name'
         ))
         
         self.stdout.write(self.style.WARNING(

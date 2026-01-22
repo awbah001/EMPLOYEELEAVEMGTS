@@ -64,7 +64,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'slms.context_processors.staff_leave_notifications',
+                'slms.context_processors.employee_leave_notifications',
             ],
         },
     },

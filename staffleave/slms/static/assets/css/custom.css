@@ -223,6 +223,7 @@ body {
 
 .form-input {
   width: 100%;
+  max-width: 350px;
   padding: 0.75rem var(--space-sm);
   border: 2px solid var(--medium-gray);
   border-radius: var(--radius-md);
@@ -231,6 +232,47 @@ body {
   background: var(--white);
   position: relative;
   padding-left: 2.5rem;
+}
+
+/* Apply standard width to all form inputs globally */
+input[type="text"]:not(.filter-input):not(.search-input input):not(table input):not(table select),
+input[type="email"]:not(.filter-input):not(.search-input input):not(table input),
+input[type="password"]:not(.filter-input):not(.search-input input):not(table input),
+input[type="number"]:not(.filter-input):not(.search-input input):not(table input),
+input[type="date"]:not(.filter-input):not(.search-input input):not(table input),
+input[type="time"]:not(.filter-input):not(.search-input input):not(table input),
+input[type="tel"]:not(.filter-input):not(.search-input input):not(table input),
+input[type="url"]:not(.filter-input):not(.search-input input):not(table input),
+input[type="search"]:not(.filter-input):not(.search-input input):not(table input),
+select:not([multiple]):not(.filter-input):not(.search-input select):not(table select),
+.form-control:not(.filter-input):not(.search-input .form-control):not(table .form-control),
+.form-select:not(.filter-input):not(.search-input .form-select):not(table .form-select) {
+  max-width: 350px !important;
+}
+
+/* Override inline width styles for form inputs */
+input[type="text"][style*="width: 100%"]:not(.filter-input):not(.search-input input):not(table input),
+input[type="email"][style*="width: 100%"]:not(.filter-input):not(.search-input input):not(table input),
+input[type="password"][style*="width: 100%"]:not(.filter-input):not(.search-input input):not(table input),
+input[type="number"][style*="width: 100%"]:not(.filter-input):not(.search-input input):not(table input),
+input[type="date"][style*="width: 100%"]:not(.filter-input):not(.search-input input):not(table input),
+select[style*="width: 100%"]:not(.filter-input):not(.search-input select):not(table select) {
+  max-width: 350px !important;
+}
+
+/* Textareas can be wider but still constrained */
+textarea:not(table textarea) {
+  max-width: 100%;
+}
+
+/* Full width for specific cases like filters in tables */
+.filter-input,
+.search-input input,
+table .form-input,
+table select,
+table input,
+table textarea {
+  max-width: 100% !important;
 }
 
 .form-input:focus {
@@ -265,7 +307,7 @@ body {
   background: var(--gradient-primary);
   color: var(--white);
   border: none;
-  padding: 0.875rem var(--space-md);
+  padding: 0.875rem 1.5rem;
   border-radius: var(--radius-md);
   font-size: 1rem;
   font-weight: 600;
@@ -275,9 +317,11 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-xs);
-  width: 100%;
+  gap: 0.5rem;
+  width: auto;
+  min-width: 150px;
   margin-bottom: var(--space-md);
+  box-sizing: border-box;
 }
 
 .btn-primary:hover {
@@ -290,7 +334,7 @@ body {
   background: transparent;
   color: var(--primary-blue);
   border: 2px solid var(--medium-gray);
-  padding: 0.875rem var(--space-md);
+  padding: 0.875rem 1.5rem;
   border-radius: var(--radius-md);
   font-size: 1rem;
   font-weight: 500;
@@ -300,8 +344,10 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-xs);
-  width: 100%;
+  gap: 0.5rem;
+  width: auto;
+  min-width: 150px;
+  box-sizing: border-box;
 }
 
 .btn-secondary:hover {
@@ -374,10 +420,16 @@ body {
 }
 
 /* Header buttons and theme icon tweaks */
-.header-actions button, .notification-btn {
+.header-actions button, .notification-btn, .sidebar-toggle, #themeToggle {
+  width: auto !important;
+  min-width: auto !important;
+  max-width: none !important;
   background: rgba(20, 28, 40, 0.03);
   border: 1px solid rgba(20,30,40,0.04);
-  padding: 0.5rem;
+  padding: 0.5rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 /* Primary and secondary button polish */
@@ -455,11 +507,13 @@ body {
 .sidebar-nav a {
   display: flex;
   align-items: center;
-  padding: 0.75rem var(--space-lg);
+  padding: 0.6875rem var(--space-lg);
   color: var(--text-secondary);
   text-decoration: none;
   transition: all 0.2s ease;
   font-weight: 500;
+  font-size: 0.9375rem;
+  line-height: 1.5;
 }
 
 .sidebar-nav a:hover,
@@ -470,8 +524,15 @@ body {
 }
 
 .sidebar-nav i {
-  margin-right: var(--space-sm);
-  font-size: 1.2rem;
+  margin-right: 0.75rem;
+  font-size: 1.125rem;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 
 .main-content {
@@ -648,7 +709,7 @@ body {
   border: none !important;
 }
 
-.btn, .btn-large, button {
+.btn, .btn-large, button:not([type="submit"]):not(.filter-input):not(.search-input button):not(.header-actions button):not(.notification-btn):not(.sidebar-toggle):not(#themeToggle) {
   background: var(--gradient-primary) !important;
   border-radius: var(--radius-md) !important;
   font-weight: 600 !important;
@@ -656,11 +717,67 @@ body {
   box-shadow: var(--shadow-light) !important;
   border: none !important;
   color: var(--white) !important;
+  width: auto !important;
+  min-width: 150px !important;
+  max-width: 250px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .btn:hover, .btn-large:hover, button:hover {
   background: var(--gradient-secondary) !important;
   box-shadow: var(--shadow-medium) !important;
+}
+
+/* Override inline width styles for buttons */
+button[style*="width: 100%"]:not(.filter-input):not(.search-input button):not([style*="flex: 1"]):not(.header-actions button):not(.notification-btn):not(.sidebar-toggle):not(#themeToggle),
+.btn-primary[style*="width: 100%"]:not([style*="flex: 1"]):not(.header-actions .btn-primary),
+.btn-secondary[style*="width: 100%"]:not([style*="flex: 1"]):not(.header-actions .btn-secondary),
+.btn[style*="width: 100%"]:not(.filter-input):not(.search-input .btn):not([style*="flex: 1"]):not(.header-actions .btn) {
+  width: auto !important;
+  min-width: 150px !important;
+  max-width: 250px !important;
+}
+
+/* Buttons with flex: 1 should have minimum width but can grow */
+button[style*="flex: 1"],
+.btn-primary[style*="flex: 1"],
+.btn-secondary[style*="flex: 1"],
+.btn[style*="flex: 1"] {
+  min-width: 150px !important;
+  flex: 1 1 150px !important;
+}
+
+/* Full width buttons for specific cases like forms in narrow containers */
+.form-actions .btn-primary,
+.form-actions .btn-secondary,
+.form-actions button {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Responsive button sizing */
+@media (max-width: 768px) {
+  .btn-primary,
+  .btn-secondary,
+  .btn,
+  button:not(.header-actions button):not(.notification-btn):not(.sidebar-toggle):not(#themeToggle) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: auto !important;
+    flex: none !important;
+  }
+  
+  /* Keep header buttons compact on mobile */
+  .header-actions button,
+  .notification-btn,
+  .sidebar-toggle,
+  #themeToggle {
+    width: auto !important;
+    min-width: auto !important;
+    max-width: none !important;
+  }
 }
 
 /* Force override of all Materialize components */

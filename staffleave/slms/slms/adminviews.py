@@ -4,7 +4,7 @@ from slmsapp.EmailBackEnd import EmailBackEnd
 from django.contrib.auth import  logout,login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from slmsapp.models import CustomUser,Staff,Staff_Leave,Department,DepartmentHead,SystemSettings,PublicHoliday,CalendarEvent
+from slmsapp.models import CustomUser,Employee,Employee_Leave,Department,DepartmentHead,SystemSettings,PublicHoliday,CalendarEvent
 from .auth_utils import validate_password, get_int_setting
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
@@ -19,8 +19,9 @@ from calendar import monthrange
 @admin_required
 def HOME(request):
     """Admin Dashboard - Combined admin and super admin functionality"""
-    staff_count = Staff.objects.all().count()
-    leave_count = Staff_Leave.objects.all().count()
+    # Count employees who are CustomUser type '2' (employees)
+    staff_count = Employee.objects.filter(admin__user_type='2').count()
+    leave_count = Employee_Leave.objects.all().count()
     total_users = CustomUser.objects.count()
     total_departments = Department.objects.count()
     active_users = CustomUser.objects.filter(is_active=True).count()
@@ -49,8 +50,16 @@ def ADD_STAFF(request):
 
 @login_required(login_url='/')
 def VIEW_STAFF(request):
-    # Show all system users for Admin "View Users" — previously this page listed Staff records only.
-    users = CustomUser.objects.all().order_by('-date_joined')
+    # Show all system users for Admin "View Users" — previously this page listed Employee records only.
+    user_type = request.GET.get('user_type')
+    
+    if user_type:
+        # Filter by user_type if provided
+        users = CustomUser.objects.filter(user_type=user_type).order_by('-date_joined')
+    else:
+        # Show all users if no filter specified
+        users = CustomUser.objects.all().order_by('-date_joined')
+    
     context = {
         "users": users,
     }
@@ -58,21 +67,23 @@ def VIEW_STAFF(request):
 
 @login_required(login_url='/')
 def EDIT_STAFF(request,id):
-    staff = Staff.objects.get(id = id)
+    employee = Employee.objects.get(id = id)
     # Prevent admin user edit through staff edit page
-    if staff.admin.user_type == '1':
+    if employee.admin.user_type == '1':
         messages.error(request, 'You cannot edit an admin using this page.')
         return redirect('view_staff')
+    departments = Department.objects.all()
     context = {
-        "staff":staff,
+        "employee":staff,
+        "departments": departments,
     }
     return render(request,'admin/edit_staff.html',context)
 
 @login_required(login_url='/')
 def UPDATE_STAFF(request):
     if request.method == "POST":
-        staff_id = request.POST.get('staff_id')
-        user = CustomUser.objects.get(id = staff_id)
+        employee_id = request.POST.get('employee_id')
+        user = CustomUser.objects.get(id = employee_id)
         # Prevent admin user update through staff update page
         if user.user_type == '1':
             messages.error(request, 'You cannot update an admin using this page.')
@@ -85,7 +96,7 @@ def UPDATE_STAFF(request):
         password = request.POST.get('password')
         address = request.POST.get('address')
         gender = request.POST.get('gender')
-        staff_type = request.POST.get('staff_type', '')
+        employee_type = request.POST.get('employee_type', '')
         user.username =username
         user.first_name =first_name
         user.last_name =last_name
@@ -99,12 +110,24 @@ def UPDATE_STAFF(request):
         if profile_pic != None and profile_pic !="":
             user.profile_pic = profile_pic
         user.save()
-        staff = Staff.objects.get(admin = staff_id)
-        staff.gender = gender
-        staff.address = address
-        if staff_type:
-            staff.staff_type = staff_type
-        staff.save()
+        employee = Employee.objects.get(admin = employee_id)
+        employee.gender = gender
+        employee.address = address
+        if employee_type:
+            employee.employee_type = employee_type
+        
+        # Handle department update
+        department_id = request.POST.get('department')
+        if department_id:
+            try:
+                employee.department = Department.objects.get(id=department_id)
+            except Department.DoesNotExist:
+                pass
+        elif department_id == '':
+            # If empty string, remove department assignment
+            employee.department = None
+        
+        employee.save()
         messages.success(request,'Staf details has been succeesfully updated')
         return redirect('view_staff')
     return render(request,'admin/edit_staff.html')                                                
@@ -113,22 +136,33 @@ def UPDATE_STAFF(request):
 def DELETE_STAFF(request,admin):
     staff = CustomUser.objects.get(id = admin)
     staff.delete()
-    messages.success(request,"Staff record has been deleted successfully.")
+    messages.success(request,"Employee record has been deleted successfully.")
     return redirect('view_staff')
 
 
 @login_required(login_url='/')
 def STAFF_LEAVE_VIEW(request):
-    staff_leave = Staff_Leave.objects.all()
+    staff_leave = Employee_Leave.objects.all()
+    
+    # Calculate status counts
+    total_count = staff_leave.count()
+    pending_count = staff_leave.filter(status=0).count()
+    approved_count = staff_leave.filter(status=1).count()
+    rejected_count = staff_leave.filter(status=2).count()
+    
     context = {
-        "staff_leave":staff_leave,
+        "employee_leave": staff_leave,
+        "total_count": total_count,
+        "pending_count": pending_count,
+        "approved_count": approved_count,
+        "rejected_count": rejected_count,
     }
     
     return render(request,'admin/staff_leave.html',context)
 
 @login_required(login_url='/')
 def STAFF_APPROVE_LEAVE(request,id):
-    leave = Staff_Leave.objects.get(id = id)
+    leave = Employee_Leave.objects.get(id = id)
     leave.status = 1
     leave.save()
     
@@ -141,7 +175,7 @@ def STAFF_APPROVE_LEAVE(request,id):
 
 @login_required(login_url='/')
 def STAFF_DISAPPROVE_LEAVE(request,id):
-    leave = Staff_Leave.objects.get(id = id)
+    leave = Employee_Leave.objects.get(id = id)
     leave.status = 2
     leave.save()
     return redirect('staff_leave_view_admin')
@@ -153,7 +187,7 @@ def STAFF_DISAPPROVE_LEAVE(request,id):
 @admin_required
 def MANAGE_USERS(request):
     """Unified user management: Create, edit, assign roles in one place"""
-    users = CustomUser.objects.all().select_related('staff').order_by('-date_joined')
+    users = CustomUser.objects.all().select_related('employee').order_by('date_joined')
     departments = Department.objects.all()
     
     # Handle POST requests (create, update, assign role)
@@ -201,6 +235,11 @@ def MANAGE_USERS(request):
                     if department_id:
                         try:
                             department = Department.objects.get(id=department_id)
+                            # Check if this department already has a department head
+                            if DepartmentHead.objects.filter(department=department).exists():
+                                user.delete()  # Remove the user that was just created
+                                messages.error(request, f'A department head already exists for {department.name}. Cannot create another one.')
+                                return redirect('admin_manage_users')
                             DepartmentHead.objects.get_or_create(
                                 admin=user,
                                 defaults={'department': department}
@@ -215,11 +254,15 @@ def MANAGE_USERS(request):
                 else:
                     messages.success(request, 'User created successfully')
 
-                # Optionally create minimal staff profile for Staff accounts
+                # Optionally create minimal staff profile for Employee accounts
                 if user_type == '2' and request.POST.get('create_staff_profile') == 'on':
-                    employee_id = request.POST.get('employee_id', '')
+                    employee_id = request.POST.get('employee_id', '').strip()
+                    defaults = {}
+                    if employee_id:
+                        defaults['employee_id'] = employee_id
+                    # employee_id will be auto-generated in save() if not provided
                     try:
-                        Staff.objects.get_or_create(admin=user, defaults={'employee_id': employee_id})
+                        Employee.objects.get_or_create(admin=user, defaults=defaults)
                     except Exception as e:
                         messages.warning(request, f'Failed to create staff profile: {str(e)}')
         
@@ -257,6 +300,16 @@ def MANAGE_USERS(request):
                     if department_id:
                         try:
                             department = Department.objects.get(id=department_id)
+                            # Check if another department head already exists for this department
+                            # Allow if the user is already the department head for this department
+                            existing_head = DepartmentHead.objects.filter(
+                                department=department
+                            ).exclude(admin=user).first()
+                            
+                            if existing_head:
+                                messages.error(request, f'A department head already exists for {department.name}. Cannot assign another one.')
+                                return redirect('admin_manage_users')
+                            
                             DepartmentHead.objects.update_or_create(
                                 admin=user,
                                 defaults={'department': department}
@@ -268,11 +321,14 @@ def MANAGE_USERS(request):
                 elif old_user_type == '3' and new_user_type != '3':
                     DepartmentHead.objects.filter(admin=user).delete()
 
-                # If user changed to Staff and requested, ensure a Staff profile exists
-                if new_user_type == '2' and request.POST.get('create_staff_profile') == 'on':
-                    employee_id = request.POST.get('employee_id', '')
+                # If user changed to Employee and requested, ensure a Employee profile exists
+                    employee_id = request.POST.get('employee_id', '').strip()
+                    defaults = {}
+                    if employee_id:
+                        defaults['employee_id'] = employee_id
+                    # employee_id will be auto-generated in save() if not provided
                     try:
-                        Staff.objects.get_or_create(admin=user, defaults={'employee_id': employee_id})
+                        Employee.objects.get_or_create(admin=user, defaults=defaults)
                     except Exception as e:
                         messages.warning(request, f'Failed to create staff profile: {str(e)}')
                 
@@ -333,8 +389,9 @@ def MANAGE_USERS(request):
         'user_type_filter': user_type_filter,
         'departments': departments,
         'edit_user': edit_user,
-        'edit_user_staff': getattr(edit_user, 'staff', None) if edit_user else None,
+        'edit_user_staff': getattr(edit_user, 'employee', None) if edit_user else None,
         'edit_user_department': edit_user_department,
+        'departments_with_heads': DepartmentHead.objects.values('department_id'),
     }
     return render(request, 'admin/manage_users.html', context)
 
@@ -385,6 +442,11 @@ def CREATE_USER(request):
             if department_id:
                 try:
                     department = Department.objects.get(id=department_id)
+                    # Check if this department already has a department head
+                    if DepartmentHead.objects.filter(department=department).exists():
+                        user.delete()  # Remove the user that was just created
+                        messages.error(request, f'A department head already exists for {department.name}. Cannot create another one.')
+                        return redirect('admin_create_user')
                     DepartmentHead.objects.get_or_create(
                         admin=user,
                         defaults={'department': department}
@@ -399,14 +461,14 @@ def CREATE_USER(request):
         else:
             messages.success(request, 'User created successfully')
 
-        # Create Staff profile when creating a Staff account or if create_staff_profile is checked
+        # Create Employee profile when creating a Employee account or if create_staff_profile is checked
         if (user_type == '2' or request.POST.get('create_staff_profile') == 'on'):
             employee_id = request.POST.get('employee_id', '')
             phone_number = request.POST.get('phone_number', '')
             address = request.POST.get('address', '')
             gender = request.POST.get('gender', '')
             date_of_joining = request.POST.get('date_of_joining') or None
-            staff_type = request.POST.get('staff_type', 'Full-time')
+            employee_type = request.POST.get('employee_type', 'Full-time')
             department_id = request.POST.get('department_id') or None
             
             # Parse date_of_joining if provided
@@ -427,30 +489,34 @@ def CREATE_USER(request):
                     pass
             
             try:
-                # Create Staff record with all information
+                # Create Employee record with all information
                 staff_defaults = {
                     'phone_number': phone_number if phone_number else None,
                     'address': address if address else 'Not provided',
                     'gender': gender if gender else 'Not specified',
-                    'staff_type': staff_type if staff_type else 'Full-time',
+                    'employee_type': employee_type if employee_type else 'Full-time',
                     'department': department,
                 }
                 
-                if employee_id:
+                # Employee ID will be auto-generated if not provided
+                if employee_id and employee_id.strip():
                     staff_defaults['employee_id'] = employee_id
                 if date_joined_obj:
                     staff_defaults['date_of_joining'] = date_joined_obj
                 
-                Staff.objects.get_or_create(admin=user, defaults=staff_defaults)
+                Employee.objects.get_or_create(admin=user, defaults=staff_defaults)
                 messages.success(request, 'User created successfully with staff profile')
             except Exception as e:
                 # Non-fatal, inform admin
-                messages.warning(request, f'Staff profile creation failed: {str(e)}')
+                messages.warning(request, f'Employee profile creation failed: {str(e)}')
         
         return redirect('admin_manage_users')
     
     departments = Department.objects.all()
-    context = {'departments': departments}
+    context = {
+        'departments': departments,
+        'departments_with_heads': DepartmentHead.objects.values('department_id'),
+    }
     return render(request, 'admin/create_user.html', context)
 
 
@@ -503,11 +569,15 @@ def EDIT_USER(request, id):
             # User was Department Head but role changed - remove DepartmentHead record
             DepartmentHead.objects.filter(admin=user).delete()
 
-        # If user changed to Staff, and admin requested, ensure Staff profile exists
+        # If user changed to Employee, and admin requested, ensure Employee profile exists
         if new_user_type == '2' and request.POST.get('create_staff_profile') == 'on':
-            employee_id = request.POST.get('employee_id', '')
+            employee_id = request.POST.get('employee_id', '').strip()
+            defaults = {}
+            if employee_id:
+                defaults['employee_id'] = employee_id
+            # employee_id will be auto-generated in save() if not provided
             try:
-                Staff.objects.get_or_create(admin=user, defaults={'employee_id': employee_id})
+                Employee.objects.get_or_create(admin=user, defaults=defaults)
             except Exception as e:
                 messages.warning(request, f'Could not create staff profile: {str(e)}')
         
@@ -867,21 +937,13 @@ def UPDATE_SETTING(request, id):
 @login_required(login_url='/')
 @admin_required
 def ADMIN_CALENDAR(request):
-    """View all leaves calendar for admin - shows ALL leaves (all statuses, all departments)"""
+    """Simple calendar widget for admin"""
     from datetime import date
-    
-    # Get ALL leaves (approved, pending, rejected) across all departments - admin sees everything
-    all_leaves = Staff_Leave.objects.all().order_by('from_date')
+    from calendar import monthrange
     
     # Get current month/year or from request
     year = int(request.GET.get('year', date.today().year))
     month = int(request.GET.get('month', date.today().month))
-    
-    # Filter leaves for the selected month
-    month_leaves = all_leaves.filter(
-        from_date__year=year,
-        from_date__month=month
-    )
     
     # Get public holidays for the month
     public_holidays = PublicHoliday.objects.filter(
@@ -890,19 +952,48 @@ def ADMIN_CALENDAR(request):
         is_active=True
     )
     
-    # Get calendar events for the month
+    # Get calendar events for the month (all active events created by admins)
     calendar_events = CalendarEvent.objects.filter(
         event_date__year=year,
         event_date__month=month,
         is_active=True
-    )
+    ).order_by('event_date', 'start_time')
+    
+    # Build simple calendar widget data
+    first_weekday = date(year, month, 1).weekday()  # Monday=0
+    days_in_month = monthrange(year, month)[1]
+    
+    # Map holidays by date
+    holiday_by_date = {h.date: h for h in public_holidays}
+    
+    # Map events by date
+    events_by_date = {}
+    for event in calendar_events:
+        if event.event_date not in events_by_date:
+            events_by_date[event.event_date] = []
+        events_by_date[event.event_date].append(event)
+    
+    # Build simple calendar days
+    calendar_days = []
+    today = date.today()
+    for day in range(1, days_in_month + 1):
+        current_date = date(year, month, day)
+        calendar_days.append({
+            'day': day,
+            'date': current_date,
+            'is_today': current_date == today,
+            'holiday': holiday_by_date.get(current_date),
+            'events': events_by_date.get(current_date, []),
+        })
     
     context = {
-        'approved_leaves': month_leaves,
-        'public_holidays': public_holidays,
-        'calendar_events': calendar_events,
         'current_year': year,
         'current_month': month,
+        'month_name': date(year, month, 1).strftime('%B'),
+        'leading_blanks': range(first_weekday),
+        'calendar_days': calendar_days,
+        'public_holidays': public_holidays,
+        'calendar_events': calendar_events,
     }
     return render(request, 'admin/calendar.html', context)
 

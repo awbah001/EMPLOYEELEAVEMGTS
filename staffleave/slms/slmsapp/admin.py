@@ -12,6 +12,30 @@ class UserModel(UserAdmin):
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}),
         ('Advanced', {'fields': ('user_type',)}),
     )
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ['title', 'sender', 'recipient', 'notification_type', 'is_read', 'is_active', 'created_at']
+    list_filter = ['notification_type', 'is_read', 'is_active', 'created_at', 'updated_at']
+    search_fields = ['title', 'message', 'sender__username', 'recipient__username']
+    readonly_fields = ['created_at', 'updated_at']
+    ordering = ['-created_at']
+
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'message', 'notification_type')
+        }),
+        ('Users', {
+            'fields': ('sender', 'recipient')
+        }),
+        ('Status', {
+            'fields': ('is_read', 'is_active')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
 admin.site.register(CustomUser,UserModel)
-admin.site.register(Staff)
-admin.site.register(Staff_Leave)
+admin.site.register(Employee)
+admin.site.register(Employee_Leave)
+admin.site.register(Notification, NotificationAdmin)

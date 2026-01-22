@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Add Staff - HR Dashboard{% endblock %}
+{% block title %}Add Employee - HR Dashboard{% endblock %}
 
 {% block content %}
 <!-- Page Header -->
@@ -11,7 +11,7 @@
             <i class="material-icons" style="font-size: 1.5rem;">person_add</i>
         </div>
         <div>
-            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Add New Staff Member</h2>
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Add New Employee Member</h2>
             <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Register a new employee to the system</p>
         </div>
     </div>
@@ -22,13 +22,23 @@
     {% if messages %}
         {% for message in messages %}
             {% if message.tags == 'error' %}
-                <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+                <div class="alert alert-error" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius-md); color: #dc2626; font-weight: 500;">
                     <i class="material-icons" style="font-size: 16px; margin-right: 8px;">error_outline</i>
                     {{message}}
                 </div>
+            {% elif message.tags == 'warning' %}
+                <div class="alert alert-warning" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.2); border-radius: var(--radius-md); color: #d97706; font-weight: 500;">
+                    <i class="material-icons" style="font-size: 16px; margin-right: 8px;">warning</i>
+                    {{message}}
+                </div>
             {% elif message.tags == 'success' %}
-                <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+                <div class="alert alert-success" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: var(--radius-md); color: #16a34a; font-weight: 500;">
                     <i class="material-icons" style="font-size: 16px; margin-right: 8px;">check_circle</i>
+                    {{message}}
+                </div>
+            {% else %}
+                <div class="alert alert-info" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: var(--radius-md); color: #2563eb; font-weight: 500;">
+                    <i class="material-icons" style="font-size: 16px; margin-right: 8px;">info</i>
                     {{message}}
                 </div>
             {% endif %}
@@ -71,9 +81,9 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="staff_type">Staff Type</label>
-                <select id="staff_type" name="staff_type" class="form-input">
-                    <option value="">Choose Staff Type</option>
+                <label for="employee_type">Employee Type</label>
+                <select id="employee_type" name="employee_type" class="form-input">
+                    <option value="">Choose Employee Type</option>
                     <option value="Full-time">Full-time</option>
                     <option value="Part-time">Part-time</option>
                     <option value="Contract">Contract</option>
@@ -94,8 +104,8 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="employee_id">Employee ID</label>
-                <input type="text" id="employee_id" name="employee_id" class="form-input">
+                <label for="employee_id">Employee ID <small style="color: #666;">(Auto-generated if left blank)</small></label>
+                <input type="text" id="employee_id" name="employee_id" class="form-input" placeholder="Leave blank to auto-generate">
             </div>
         </div>
         

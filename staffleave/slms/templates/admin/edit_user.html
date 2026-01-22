@@ -48,7 +48,7 @@
         <!-- Profile Picture -->
         <div style="text-align: center; margin-bottom: 2rem; padding: 1.5rem; background: var(--light-gray); border-radius: var(--radius-lg);">
             {% if user.profile_pic %}
-            <img src="/{{ user.profile_pic }}" alt="{{ user.first_name }}" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 1rem;" id="profile-preview">
+            <img src="{{ user.profile_pic.url }}" alt="{{ user.first_name }}" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 1rem;" id="profile-preview">
             {% else %}
             <div style="width: 100px; height: 100px; background: var(--medium-gray); border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center;" id="profile-preview">
                 <i class="material-icons" style="font-size: 3rem; color: var(--text-secondary);">person</i>
@@ -96,7 +96,7 @@
                 <label for="user_type">User Type <span style="color: #ef4444;">*</span></label>
                 <select id="user_type" name="user_type" class="form-input" required>
                     <option value="1" {% if user.user_type == '1' %}selected{% endif %}>Admin</option>
-                    <option value="2" {% if user.user_type == '2' %}selected{% endif %}>Staff</option>
+                    <option value="2" {% if user.user_type == '2' %}selected{% endif %}>Employee</option>
                     <option value="3" {% if user.user_type == '3' %}selected{% endif %}>Department Head</option>
                     <option value="4" {% if user.user_type == '4' %}selected{% endif %}>HR</option>
                 </select>
@@ -122,14 +122,14 @@
 
         <div style="margin-top: 0.75rem;">
             <label style="display:flex; align-items:center; gap:0.5rem;">
-                <input type="checkbox" name="create_staff_profile" id="create_staff_profile" {% if user.user_type == '2' and user.staff %}checked{% endif %} />
-                <span style="color:var(--text-secondary);">Ensure a minimal staff profile exists for this Staff account</span>
+                <input type="checkbox" name="create_staff_profile" id="create_staff_profile" {% if user.user_type == '2' and user.employee %}checked{% endif %} />
+                <span style="color:var(--text-secondary);">Ensure a minimal employee profile exists for this Employee account</span>
             </label>
         </div>
 
-        <div id="staff-extras" style="display: {% if user.user_type == '2' and user.staff %}block{% else %}none{% endif %}; margin-top:0.75rem;">
-            <label for="employee_id">Employee ID (optional)</label>
-            <input type="text" id="employee_id" name="employee_id" class="form-input" value="{% if user.staff %}{{ user.staff.employee_id }}{% endif %}" />
+        <div id="employee-extras" style="display: {% if user.user_type == '2' and user.employee %}block{% else %}none{% endif %}; margin-top:0.75rem;">
+            <label for="employee_id">Employee ID <small style="color: #666;">(Auto-generated if left blank)</small></label>
+            <input type="text" id="employee_id" name="employee_id" class="form-input" value="{% if user.employee %}{{ user.employee.employee_id }}{% endif %}" placeholder="Leave blank to auto-generate" />
         </div>
         
         <!-- Submit Button -->
@@ -160,9 +160,9 @@ document.addEventListener('DOMContentLoaded', function() {
             departmentSelect.required = false;
         }
     });
-    // staff profile toggle
+    // employee profile toggle
     const createStaffCheckbox = document.getElementById('create_staff_profile');
-    const staffExtras = document.getElementById('staff-extras');
+    const staffExtras = document.getElementById('employee-extras');
     if (createStaffCheckbox) {
         createStaffCheckbox.addEventListener('change', function(){
             staffExtras.style.display = createStaffCheckbox.checked ? 'block' : 'none';

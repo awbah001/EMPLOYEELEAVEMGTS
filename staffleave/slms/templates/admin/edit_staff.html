@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Edit Staff - Admin Dashboard{% endblock %}
+{% block title %}Edit Employee - Admin Dashboard{% endblock %}
 
 {% block content %}
 <!-- Page Header -->
@@ -11,8 +11,8 @@
             <i class="material-icons" style="font-size: 1.5rem;">edit</i>
         </div>
         <div>
-            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Update Staff Member</h2>
-            <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Modify staff information and account details</p>
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Update Employee Member</h2>
+            <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Modify employee information and account details</p>
         </div>
     </div>
 </div>
@@ -38,12 +38,18 @@
     
     <form method="POST" action="{% url 'update_staff' %}" enctype="multipart/form-data" style="max-width: 800px;">
         {% csrf_token %}
-        <input type="hidden" name="staff_id" value="{{staff.admin.id}}">
+        <input type="hidden" name="staff_id" value="{{employee.admin.id}}">
         
         <!-- Profile Picture Section -->
         <div style="text-align: center; margin-bottom: 2rem; padding: 1.5rem; background: var(--light-gray); border-radius: var(--radius-lg);">
             <div style="width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 1rem; overflow: hidden; border: 4px solid var(--medium-gray);" id="profile-preview">
-                <img src="/{{staff.admin.profile_pic}}" alt="{{staff.admin.first_name}}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% if employee.admin.profile_pic %}
+                    <img src="{{ employee.admin.profile_pic.url }}" alt="{{employee.admin.first_name}}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                    <div style="width: 100%; height: 100%; background: var(--light-gray); display: flex; align-items: center; justify-content: center;">
+                        <i class="material-icons" style="color: var(--text-secondary); font-size: 3rem;">person</i>
+                    </div>
+                {% endif %}
             </div>
             <div class="form-group">
                 <label style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; display: block;">Profile Picture</label>
@@ -70,7 +76,7 @@
                     <label for="first_name">First Name</label>
                     <div style="position: relative;">
                         <i class="material-icons input-icon">person</i>
-                        <input type="text" id="first_name" name="first_name" class="form-input" value="{{staff.admin.first_name}}" required>
+                        <input type="text" id="first_name" name="first_name" class="form-input" value="{{employee.admin.first_name}}" required>
                     </div>
                 </div>
                 
@@ -78,7 +84,7 @@
                     <label for="last_name">Last Name</label>
                     <div style="position: relative;">
                         <i class="material-icons input-icon">person</i>
-                        <input type="text" id="last_name" name="last_name" class="form-input" value="{{staff.admin.last_name}}" required>
+                        <input type="text" id="last_name" name="last_name" class="form-input" value="{{employee.admin.last_name}}" required>
                     </div>
                 </div>
             </div>
@@ -88,7 +94,7 @@
                 <div style="position: relative;">
                     <i class="material-icons input-icon">wc</i>
                     <select id="gender" name="gender" class="form-input" required style="padding-left: 2.5rem;">
-                        <option value="{{staff.gender}}" selected>{{staff.gender}}</option>
+                        <option value="{{employee.gender}}" selected>{{employee.gender}}</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                         <option value="Other">Other</option>
@@ -100,7 +106,7 @@
                 <label for="address">Address</label>
                 <div style="position: relative;">
                     <i class="material-icons input-icon" style="top: 1rem;">location_on</i>
-                    <textarea id="address" name="address" class="form-input" rows="4" required style="padding-left: 2.5rem; resize: vertical; min-height: 100px;">{{staff.address}}</textarea>
+                    <textarea id="address" name="address" class="form-input" rows="4" required style="padding-left: 2.5rem; resize: vertical; min-height: 100px;">{{employee.address}}</textarea>
                 </div>
             </div>
         </div>
@@ -116,7 +122,7 @@
                 <label for="email">Email Address</label>
                 <div style="position: relative;">
                     <i class="material-icons input-icon">email</i>
-                    <input type="email" id="email" name="email" class="form-input" value="{{staff.admin.email}}" required>
+                    <input type="email" id="email" name="email" class="form-input" value="{{employee.admin.email}}" required>
                 </div>
             </div>
             
@@ -124,21 +130,34 @@
                 <label for="username">Username</label>
                 <div style="position: relative;">
                     <i class="material-icons input-icon">alternate_email</i>
-                    <input type="text" id="username" name="username" class="form-input" value="{{staff.admin.username}}" required>
+                    <input type="text" id="username" name="username" class="form-input" value="{{employee.admin.username}}" required>
                 </div>
             </div>
             
             <div class="form-group">
-                <label for="staff_type">Staff Type</label>
+                <label for="employee_type">Employee Type</label>
                 <div style="position: relative;">
                     <i class="material-icons input-icon">work</i>
-                    <select id="staff_type" name="staff_type" class="form-input" style="padding-left: 2.5rem;">
-                        <option value="">Choose Staff Type</option>
-                        <option value="Full-time" {% if staff.staff_type == 'Full-time' %}selected{% endif %}>Full-time</option>
-                        <option value="Part-time" {% if staff.staff_type == 'Part-time' %}selected{% endif %}>Part-time</option>
-                        <option value="Contract" {% if staff.staff_type == 'Contract' %}selected{% endif %}>Contract</option>
-                        <option value="Temporary" {% if staff.staff_type == 'Temporary' %}selected{% endif %}>Temporary</option>
-                        <option value="Intern" {% if staff.staff_type == 'Intern' %}selected{% endif %}>Intern</option>
+                    <select id="employee_type" name="employee_type" class="form-input" style="padding-left: 2.5rem;">
+                        <option value="">Choose Employee Type</option>
+                        <option value="Full-time" {% if employee.employee_type == 'Full-time' %}selected{% endif %}>Full-time</option>
+                        <option value="Part-time" {% if employee.employee_type == 'Part-time' %}selected{% endif %}>Part-time</option>
+                        <option value="Contract" {% if employee.employee_type == 'Contract' %}selected{% endif %}>Contract</option>
+                        <option value="Temporary" {% if employee.employee_type == 'Temporary' %}selected{% endif %}>Temporary</option>
+                        <option value="Intern" {% if employee.employee_type == 'Intern' %}selected{% endif %}>Intern</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="department">Department</label>
+                <div style="position: relative;">
+                    <i class="material-icons input-icon">business</i>
+                    <select id="department" name="department" class="form-input" style="padding-left: 2.5rem;">
+                        <option value="">Choose Department</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if employee.department and employee.department.id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+                        {% endfor %}
                     </select>
                 </div>
             </div>
@@ -160,11 +179,11 @@
         
         <!-- Action Buttons -->
         <div style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid var(--medium-gray);">
-            <a href="{% url 'view_staff' %}" class="btn-secondary" style="width: auto; padding: 0.75rem 1.5rem;">
+            <a href="{% url 'view_staff' %}" class="btn-secondary" style="width: auto; padding: 0.875rem 1.5rem; min-width: 150px; justify-content: center;">
                 <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">arrow_back</i>
                 Cancel
             </a>
-            <button type="submit" class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem;">
+            <button type="submit" class="btn-primary" style="width: auto; padding: 0.875rem 1.5rem; min-width: 150px; justify-content: center;">
                 <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">save</i>
                 Update Staff
             </button>
@@ -181,6 +200,7 @@
     opacity: 1 !important;
     pointer-events: auto !important;
     width: 100% !important;
+    max-width: 350px !important;
     height: auto !important;
     border: 2px solid var(--medium-gray) !important;
     padding: 0.75rem 1rem !important;
@@ -203,6 +223,7 @@ select.form-input {
 
 /* Textarea styling */
 textarea.form-input {
+    max-width: 100% !important;
     resize: vertical;
     font-family: inherit;
 }

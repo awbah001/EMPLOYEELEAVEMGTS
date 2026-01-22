@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Analytics Dashboard - HR{% endblock %}
+
+{% block content %}
+<style>
+    .kpi-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-left: 4px solid;
+    }
+    
+    .kpi-card.primary {
+        border-left-color: #3b82f6;
+    }
+    
+    .kpi-card.success {
+        border-left-color: #10b981;
+    }
+    
+    .kpi-card.warning {
+        border-left-color: #f59e0b;
+    }
+    
+    .kpi-card.danger {
+        border-left-color: #ef4444;
+    }
+    
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #1f2937;
+        margin: 0.5rem 0;
+    }
+    
+    .kpi-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .kpi-percentage {
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+        color: #10b981;
+    }
+    
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .chart-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 1.5rem;
+    }
+    
+    .header-section {
+        background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .header-section h1 {
+        margin: 0;
+        font-size: 2rem;
+    }
+    
+    .year-selector {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+    }
+    
+    .year-selector input {
+        background: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        color: #1f2937;
+        font-weight: 600;
+        width: 100px;
+    }
+    
+    .year-selector button {
+        background: white;
+        color: #10b981;
+        border: none;
+        padding: 0.5rem 1.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .year-selector button:hover {
+        background: #f3f4f6;
+    }
+</style>
+
+<!-- Page Header -->
+<div class="header-section">
+    <div>
+        <h1>📊 HR Analytics Dashboard</h1>
+        <p style="margin: 0; opacity: 0.9;">Employee leave statistics and insights</p>
+    </div>
+    <div class="year-selector">
+        <form method="GET" style="display: flex; gap: 1rem; align-items: center;">
+            <label for="year_select" style="margin: 0; white-space: nowrap;">Select Year:</label>
+            <input type="number" id="year_select" name="year" value="{{ year }}" min="2020" max="2100">
+            <button type="submit">Apply</button>
+        </form>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <div class="kpi-card primary">
+        <div class="kpi-label">Total Employees</div>
+        <div class="kpi-value">{{ total_employees }}</div>
+        <div style="font-size: 0.875rem; color: #6b7280;">Staff members</div>
+    </div>
+    
+    <div class="kpi-card warning">
+        <div class="kpi-label">Leave Applications</div>
+        <div class="kpi-value">{{ total_leaves_applied }}</div>
+        <div style="font-size: 0.875rem; color: #6b7280;">Year {{ year }}</div>
+    </div>
+    
+    <div class="kpi-card success">
+        <div class="kpi-label">Approved Leaves</div>
+        <div class="kpi-value">{{ approved_leaves }}</div>
+        <div class="kpi-percentage">{{ approval_rate }}% approval rate</div>
+    </div>
+    
+    <div class="kpi-card warning">
+        <div class="kpi-label">Pending Approvals</div>
+        <div class="kpi-value">{{ pending_leaves }}</div>
+        <div style="font-size: 0.875rem; color: #6b7280;">Awaiting decision</div>
+    </div>
+    
+    <div class="kpi-card danger">
+        <div class="kpi-label">Rejected Leaves</div>
+        <div class="kpi-value">{{ rejected_leaves }}</div>
+        <div style="font-size: 0.875rem; color: #6b7280;">Not approved</div>
+    </div>
+    
+    <div class="kpi-card primary">
+        <div class="kpi-label">Employees on Leave Today</div>
+        <div class="kpi-value">{{ employees_on_leave_today }}</div>
+        <div style="font-size: 0.875rem; color: #6b7280;">Currently on leave</div>
+    </div>
+</div>
+
+<!-- Charts Row 1 -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+    <!-- Line Chart - Monthly Trend -->
+    <div class="chart-container">
+        <div class="chart-title">📈 Monthly Leave Trend</div>
+        <canvas id="monthlyChart" height="100"></canvas>
+    </div>
+    
+    <!-- Pie Chart - Status Distribution -->
+    <div class="chart-container">
+        <div class="chart-title">🥧 Leave Status Distribution</div>
+        <div style="max-width: 300px; margin: 0 auto;">
+            <canvas id="statusChart" height="150"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+    <!-- Pie Chart - Leave Types -->
+    <div class="chart-container">
+        <div class="chart-title">📋 Leave Types Distribution</div>
+        <div style="max-width: 300px; margin: 0 auto;">
+            <canvas id="leaveTypeChart" height="150"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 3 -->
+<div class="chart-container" style="margin-bottom: 2rem;">
+    <div class="chart-title">📊 Department-wise Leave Statistics</div>
+    <canvas id="departmentChart" height="80"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Color schemes
+    const primaryColor = '#10b981';
+    const successColor = '#10b981';
+    const warningColor = '#f59e0b';
+    const dangerColor = '#ef4444';
+    const lightGreen = 'rgba(16, 185, 129, 0.1)';
+    
+    // Monthly Trend Chart
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    new Chart(monthlyCtx, {
+        type: 'line',
+        data: {
+            labels: {{ monthly_labels | safe }},
+            datasets: [{
+                label: 'Leave Applications',
+                data: {{ monthly_data }},
+                borderColor: primaryColor,
+                backgroundColor: lightGreen,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: primaryColor,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+    
+    // Status Distribution Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ status_labels | safe }},
+            datasets: [{
+                data: {{ status_data }},
+                backgroundColor: [
+                    successColor,
+                    warningColor,
+                    dangerColor
+                ],
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Leave Type Chart
+    const leaveTypeCtx = document.getElementById('leaveTypeChart').getContext('2d');
+    const leaveTypeColors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
+    new Chart(leaveTypeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ leave_type_labels | safe }},
+            datasets: [{
+                data: {{ leave_type_data }},
+                backgroundColor: leaveTypeColors.slice(0, {{ leave_type_labels | length }}),
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Department Chart
+    const departmentCtx = document.getElementById('departmentChart').getContext('2d');
+    new Chart(departmentCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ dept_labels | safe }},
+            datasets: [
+                {
+                    label: 'Approved',
+                    data: {{ dept_approved }},
+                    backgroundColor: successColor
+                },
+                {
+                    label: 'Pending',
+                    data: {{ dept_pending }},
+                    backgroundColor: warningColor
+                },
+                {
+                    label: 'Rejected',
+                    data: {{ dept_rejected }},
+                    backgroundColor: dangerColor
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    stacked: false,
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    stacked: false,
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            }
+        }
+    });
+</script>
+
+{% endblock %}

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Apply for Leave - Staff Dashboard{% endblock %}
+{% block title %}Apply for Leave - Employee Dashboard{% endblock %}
 
 {% block content %}
 <!-- Page Header -->
@@ -19,6 +19,31 @@
 
 <!-- Leave Application Form -->
 <div class="modern-card">
+    <!-- Warning: User is currently on leave -->
+    {% if is_on_leave and current_leave %}
+    <div class="alert alert-warning" style="margin-bottom: 1.5rem; background: #fef3c7; border: 2px solid #f59e0b; color: #92400e; padding: 1.25rem; border-radius: var(--radius-md);">
+        <div style="display: flex; align-items: flex-start; gap: 1rem;">
+            <i class="material-icons" style="font-size: 24px; color: #f59e0b; flex-shrink: 0;">warning</i>
+            <div style="flex: 1;">
+                <h3 style="margin: 0 0 0.5rem 0; font-size: 1.125rem; font-weight: 600; color: #92400e;">You Are Currently On Leave</h3>
+                <p style="margin: 0 0 0.75rem 0; line-height: 1.6;">
+                    You cannot apply for a new leave because you are currently on approved leave. Please wait until your current leave period ends before submitting a new application.
+                </p>
+                <div style="background: rgba(255, 255, 255, 0.5); padding: 0.75rem; border-radius: var(--radius-sm); margin-top: 0.75rem;">
+                    <div style="display: grid; grid-template-columns: auto 1fr; gap: 0.5rem 1rem; font-size: 0.875rem;">
+                        <strong style="color: #92400e;">Leave Type:</strong>
+                        <span>{{ current_leave.leave_type_name|default:current_leave.leave_type.name|default:"N/A" }}</span>
+                        <strong style="color: #92400e;">From:</strong>
+                        <span>{{ current_leave.from_date|date:"F d, Y" }}</span>
+                        <strong style="color: #92400e;">To:</strong>
+                        <span>{{ current_leave.to_date|date:"F d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
     <!-- Success/Error Messages -->
                         {% if messages %}
                         {% for message in messages %}
@@ -36,7 +61,7 @@
                         {% endfor %}
                        {% endif %}
                        
-    <form method="POST" action="{% url 'staff_apply_leave_save' %}" enctype="multipart/form-data" style="max-width: 700px;">
+    <form method="POST" action="{% url 'staff_apply_leave_save' %}" enctype="multipart/form-data" style="max-width: 700px;" id="leave-application-form" {% if is_on_leave %}onsubmit="return false;"{% endif %}>
                            {% csrf_token %}
         
         <!-- Leave Type Section -->
@@ -178,11 +203,11 @@
 
         <!-- Action Buttons -->
         <div style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid var(--medium-gray);">
-            <a href="{% url 'staff_home' %}" class="btn-secondary" style="width: auto; padding: 0.75rem 1.5rem;">
+            <a href="{% url 'staff_home' %}" class="btn-secondary" style="width: auto; padding: 0.875rem 1.5rem; min-width: 150px; justify-content: center;">
                 <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">arrow_back</i>
                 Cancel
             </a>
-            <button type="submit" class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem;">
+            <button type="submit" class="btn-primary" style="width: auto; padding: 0.875rem 1.5rem; min-width: 150px; justify-content: center;" {% if is_on_leave %}disabled{% endif %} id="submit-btn">
                 <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">send</i>
                 Submit Application
             </button>
@@ -360,25 +385,49 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Form submission with loading state
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalContent = submitBtn.innerHTML;
-        
-        // Basic form validation
-        if (!leaveTypeSelect.value || !fromDateInput.value || !toDateInput.value || !document.getElementById('message').value.trim()) {
-            e.preventDefault();
-            return;
-        }
-        
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<div class="loading"></div>Submitting Application...';
-        
-        // Re-enable after 10 seconds (fallback)
-        setTimeout(() => {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalContent;
-        }, 10000);
-    });
+    const leaveForm = document.getElementById('leave-application-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const isOnLeave = {{ is_on_leave|yesno:"true,false" }};
+    
+    if (leaveForm) {
+        leaveForm.addEventListener('submit', function(e) {
+            // Prevent submission if user is on leave
+            if (isOnLeave) {
+                e.preventDefault();
+                alert('You cannot apply for leave while you are currently on leave. Please wait until your current leave period ends.');
+                return false;
+            }
+            
+            const originalContent = submitBtn.innerHTML;
+            
+            // Basic form validation
+            if (!leaveTypeSelect.value || !fromDateInput.value || !toDateInput.value || !document.getElementById('message').value.trim()) {
+                e.preventDefault();
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="loading"></div>Submitting Application...';
+            
+            // Re-enable after 10 seconds (fallback)
+            setTimeout(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalContent;
+            }, 10000);
+        });
+    }
+    
+    // Disable all form inputs if user is on leave
+    if (isOnLeave) {
+        const formInputs = leaveForm.querySelectorAll('input, select, textarea, button[type="submit"]');
+        formInputs.forEach(input => {
+            if (input.type !== 'hidden' && input.id !== 'csrfmiddlewaretoken') {
+                input.disabled = true;
+                input.style.opacity = '0.6';
+                input.style.cursor = 'not-allowed';
+            }
+        });
+    }
     
     // Real-time form validation
     document.querySelectorAll('.form-input[required]').forEach(input => {

@@ -134,7 +134,7 @@
                         <select id="user_role" name="user_role" class="form-input" required style="padding-left: 2.5rem;">
                             <option value="">Choose Role</option>
                             <option value="1">Super Admin</option>
-                            <option value="2" selected>Staff</option>
+                            <option value="2" selected>Employee</option>
                             <option value="3">Department Head</option>
                             <option value="4">HR</option>
                         </select>
@@ -142,12 +142,12 @@
                 </div>
             </div>
             
-            <!-- Department Selection (for Staff and Department Head) -->
-            <div class="form-group" id="department-group" style="display: none;">
-                <label for="department">Department *</label>
+            <!-- Department Selection (always visible for Staff) -->
+            <div class="form-group" id="department-group">
+                <label for="department">Department</label>
                 <div style="position: relative;">
                     <i class="material-icons input-icon">business</i>
-                    <select id="department" name="department" class="form-input" style="padding-left: 2.5rem;">
+                    <select id="department" name="department_id" class="form-input" style="padding-left: 2.5rem;">
                         <option value="">Choose Department</option>
                         {% for dept in departments %}
                         <option value="{{ dept.id }}">{{ dept.name }}</option>
@@ -156,12 +156,12 @@
                 </div>
             </div>
             
-            <div class="form-group" id="staff-type-group" style="display: block;">
-                <label for="staff_type">Staff Type</label>
+            <div class="form-group" id="employee-type-group" style="display: block;">
+                <label for="employee_type">Employee Type</label>
                 <div style="position: relative;">
                     <i class="material-icons input-icon">work</i>
-                    <select id="staff_type" name="staff_type" class="form-input" style="padding-left: 2.5rem;">
-                        <option value="">Choose Staff Type</option>
+                    <select id="employee_type" name="employee_type" class="form-input" style="padding-left: 2.5rem;">
+                        <option value="">Choose Employee Type</option>
                         <option value="Full-time">Full-time</option>
                         <option value="Part-time">Part-time</option>
                         <option value="Contract">Contract</option>
@@ -188,11 +188,11 @@
         
         <!-- Action Buttons -->
         <div style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid var(--medium-gray);">
-            <a href="{% url 'admin_home' %}" class="btn-secondary" style="width: auto; padding: 0.75rem 1.5rem;">
+            <a href="{% url 'admin_home' %}" class="btn-secondary" style="width: auto; padding: 0.875rem 1.5rem; min-width: 150px; justify-content: center;">
                 <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">arrow_back</i>
                 Cancel
             </a>
-            <button type="submit" class="btn-primary" style="width: auto; padding: 0.75rem 1.5rem;">
+            <button type="submit" class="btn-primary" style="width: auto; padding: 0.875rem 1.5rem; min-width: 150px; justify-content: center;">
                 <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">person_add</i>
                 Create User
             </button>
@@ -209,6 +209,7 @@
     opacity: 1 !important;
     pointer-events: auto !important;
     width: 100% !important;
+    max-width: 350px !important;
     height: auto !important;
     border: 2px solid var(--medium-gray) !important;
     padding: 0.75rem 1rem !important;
@@ -217,6 +218,11 @@
     background: var(--white) !important;
     color: var(--text-primary) !important;
     font-family: 'Inter', sans-serif !important;
+}
+
+/* Textareas can be wider */
+textarea.form-input {
+    max-width: 100% !important;
 }
 
 /* Select dropdown styling */
@@ -359,14 +365,14 @@ document.getElementById('password').addEventListener('input', function() {
 
 // Show/hide fields based on user role
 document.getElementById('user_role').addEventListener('change', function() {
-    const staffTypeGroup = document.getElementById('staff-type-group');
-    const staffTypeSelect = document.getElementById('staff_type');
+    const staffTypeGroup = document.getElementById('employee-type-group');
+    const staffTypeSelect = document.getElementById('employee_type');
     const departmentGroup = document.getElementById('department-group');
     const departmentSelect = document.getElementById('department');
     
     const role = this.value;
     
-    // Staff type - only for Staff (role 2)
+    // Employee type - only for Employee (role 2)
     if (role === '2') {
         staffTypeGroup.style.display = 'block';
         staffTypeSelect.required = true;
@@ -376,34 +382,29 @@ document.getElementById('user_role').addEventListener('change', function() {
         staffTypeSelect.value = '';
     }
     
-    // Department - for Staff (role 2) and Department Head (role 3)
-    if (role === '2' || role === '3') {
-        departmentGroup.style.display = 'block';
-        departmentSelect.required = (role === '3'); // Required for Department Head
-    } else {
-        departmentGroup.style.display = 'none';
-        departmentSelect.required = false;
-        departmentSelect.value = '';
-    }
+    // Department - always visible, required for Department Head (role 3)
+    departmentGroup.style.display = 'block';
+    departmentSelect.required = (role === '3'); // Required only for Department Head
 });
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     const userRole = document.getElementById('user_role');
-    const staffTypeGroup = document.getElementById('staff-type-group');
-    const staffTypeSelect = document.getElementById('staff_type');
+    const staffTypeGroup = document.getElementById('employee-type-group');
+    const staffTypeSelect = document.getElementById('employee_type');
     const departmentGroup = document.getElementById('department-group');
     const departmentSelect = document.getElementById('department');
     
     const role = userRole.value;
     
+    // Department is always visible
+    departmentGroup.style.display = 'block';
+    
     if (role === '2') {
         staffTypeGroup.style.display = 'block';
         staffTypeSelect.required = true;
-        departmentGroup.style.display = 'block';
         departmentSelect.required = false;
     } else if (role === '3') {
-        departmentGroup.style.display = 'block';
         departmentSelect.required = true;
     }
 });

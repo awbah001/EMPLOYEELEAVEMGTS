@@ -50,7 +50,7 @@ def doLogin(request):
             user_type = user.user_type
             if user_type == '1':  # Super Admin
                 return redirect('superadmin_home')
-            elif user_type == '2':  # Staff
+            elif user_type == '2':  # Employee
                 return redirect('staff_home')
             elif user_type == '3':  # Department Head
                 return redirect('dh_home')
@@ -163,7 +163,6 @@ def CHANGE_PASSWORD(request):
         current = request.POST.get("cpwd")
         new_pas = request.POST.get('npwd')
         user = User.objects.get(id=request.user.id)
-        un = user.username
         if user.check_password(current):
             ok, msg = validate_password(new_pas)
             if not ok:
@@ -174,7 +173,8 @@ def CHANGE_PASSWORD(request):
             user.save()
             messages.success(request, 'Password changed successfully')
             # re-login the user so the session remains valid
-            user = User.objects.get(username=un)
+            # Set the backend explicitly for email-based authentication
+            user.backend = 'slmsapp.EmailBackEnd.EmailBackEnd'
             login(request, user)
             return redirect('change_password')
         else:

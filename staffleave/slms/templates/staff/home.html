@@ -139,7 +139,7 @@
             <i class="material-icons" style="color: var(--primary-blue);">event_note</i>
             Your Leave Applications
         </h3>
-        {% if staff_leave_history %}
+        {% if employee_leave_history %}
         <a href="{% url 'staff_leave_view' %}" style="color: var(--primary-blue); text-decoration: none; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem;">
             View all
             <i class="material-icons" style="font-size: 1rem;">arrow_forward</i>
@@ -147,11 +147,12 @@
         {% endif %}
     </div>
     
-    {% if staff_leave_history %}
-        <div class="table-container" style="overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--medium-gray);">
+    {% if employee_leave_history %}
+        <div class="table-container" style="overflow-x: auto; overflow-y: auto; border-radius: var(--radius-lg); border: 1px solid var(--medium-gray);">
             <table class="modern-table" id="table_id">
                 <thead>
                     <tr>
+                        <th style="width: 50px;">#</th>
                         <th style="width: 60px;">ID</th>
                         <th style="width: 120px;">Leave Type</th>
                         <th style="width: 120px;">Start Date</th>
@@ -163,9 +164,10 @@
                 </thead>
                 
                 <tbody>
-                    {% for leave in staff_leave_history %}
+                    {% for leave in employee_leave_history %}
                     <tr>
-                        <td style="font-weight: 600; color: var(--primary-blue);">#{{leave.id}}</td>
+                        <td style="font-weight: 600; color: var(--text-secondary);">{{ forloop.counter }}</td>
+                        <td style="font-weight: 600; color: var(--primary-blue);">{{leave.id}}</td>
                         <td>
                             <span class="status-badge" style="background: rgba(45, 90, 160, 0.1); color: var(--primary-blue);">
                                 {{leave.leave_type}}

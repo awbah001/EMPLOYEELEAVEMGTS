@@ -12,7 +12,7 @@
         </div>
         <div>
             <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Set Leave Entitlements</h2>
-            <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Assign leave entitlements to staff members</p>
+            <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Assign leave entitlements to employee members</p>
         </div>
     </div>
 </div>
@@ -51,11 +51,11 @@
             {% csrf_token %}
             
             <div class="form-group">
-                <label for="staff">Staff Member *</label>
-                <select id="staff" name="staff_id" class="form-input" required>
-                    <option value="">Select Staff</option>
-                    {% for staff in staff_list %}
-                        <option value="{{ staff.id }}">{{ staff.admin.get_full_name }} - {{ staff.employee_id }}</option>
+                <label for="employee">Employee Member *</label>
+                <select id="employee" name="staff_id" class="form-input" required>
+                    <option value="">Select Employee</option>
+                    {% for employee in employee_list %}
+                        <option value="{{ employee.id }}">{{ employee.admin.get_full_name }} - {{ employee.employee_id }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -95,11 +95,11 @@
         </h3>
         
         {% if entitlements %}
-            <div class="table-container" style="overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--medium-gray);">
+            <div class="table-container" style="overflow-x: auto; overflow-y: auto; border-radius: var(--radius-lg); border: 1px solid var(--medium-gray);">
                 <table class="modern-table" id="entitlements-table">
                     <thead>
                         <tr>
-                            <th>Staff</th>
+                            <th>Employee</th>
                             <th>Leave Type</th>
                             <th>Year</th>
                             <th>Entitlement</th>
@@ -112,8 +112,8 @@
                         {% for entitlement in entitlements %}
                         <tr>
                             <td>
-                                <div style="font-weight: 600; color: var(--text-primary);">{{ entitlement.staff.admin.get_full_name }}</div>
-                                <div style="font-size: 0.875rem; color: var(--text-secondary);">{{ entitlement.staff.employee_id }}</div>
+                                <div style="font-weight: 600; color: var(--text-primary);">{{ entitlement.employee.admin.get_full_name }}</div>
+                                <div style="font-size: 0.875rem; color: var(--text-secondary);">{{ entitlement.employee.employee_id }}</div>
                             </td>
                             <td>{{ entitlement.leave_type.name }}</td>
                             <td>{{ entitlement.year }}</td>

@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from slmsapp.models import (
-    CustomUser, Staff, Department, DepartmentHead, SystemSettings
+    CustomUser, Employee, Department, DepartmentHead, SystemSettings
 )
 from .auth_utils import validate_password
 from .decorators import super_admin_required
@@ -14,7 +14,7 @@ from .decorators import super_admin_required
 def HOME(request):
     """Super Admin Dashboard"""
     total_users = CustomUser.objects.count()
-    total_staff = Staff.objects.count()
+    total_staff = Employee.objects.count()
     total_departments = Department.objects.count()
     active_users = CustomUser.objects.filter(is_active=True).count()
     
@@ -31,7 +31,7 @@ def HOME(request):
 @super_admin_required
 def MANAGE_USERS(request):
     """Create, edit, or deactivate user accounts"""
-    users = CustomUser.objects.all().select_related('staff').order_by('-date_joined')
+    users = CustomUser.objects.all().select_related('employee').order_by('-date_joined')
     
     # Filter by user type if provided
     user_type_filter = request.GET.get('user_type', '')

@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Send Notification{% endblock title %}
+
+{% block css %}
+<style>
+.form-section {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.recipient-preview {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: white;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+}
+
+.notification-type-option {
+    padding: 8px 12px;
+    margin: 2px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.notification-type-option:hover {
+    background-color: #f8f9fa;
+}
+
+.notification-type-option.selected {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.preview-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.char-counter {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+</style>
+{% endblock css %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="mdi mdi-send-outline"></i> Send Notification</h2>
+                    <p class="text-muted">Send a notification to another user</p>
+                </div>
+                <div>
+                    <a href="{% url 'notification_list' %}" class="btn btn-secondary">
+                        <i class="mdi mdi-arrow-left"></i> Back to Notifications
+                    </a>
+                    {% if user.user_type == '1' %}
+                    <a href="{% url 'send_bulk_notification' %}" class="btn btn-success ml-2">
+                        <i class="mdi mdi-bullhorn"></i> Send Bulk
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Form -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="form-section">
+                <form method="post" id="notification-form">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.recipient.id_for_label }}" class="form-label">{{ form.recipient.label }} <span class="text-danger">*</span></label>
+                                <select id="recipient-select" name="recipient" class="form-select" required>
+                                    <option value="">Choose recipient...</option>
+                                    {% for user_obj in form.fields.recipient.queryset %}
+                                        <option value="{{ user_obj.pk }}"
+                                                {% if form.recipient.value == user_obj.pk|stringformat:"s" %}selected{% endif %}>
+                                            {{ user_obj.get_full_name|default:user_obj.username }}
+                                            {% if user_obj.user_type == '1' %} (Admin){% endif %}
+                                            {% if user_obj.user_type == '2' %} (Staff){% endif %}
+                                            {% if user_obj.user_type == '3' %} (Department Head){% endif %}
+                                            {% if user_obj.user_type == '4' %} (HR){% endif %}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.recipient.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.recipient.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.notification_type.id_for_label }}" class="form-label">{{ form.notification_type.label }} <span class="text-danger">*</span></label>
+                                <select id="notification-type-select" name="notification_type" class="form-select" required>
+                                    {% for value, display in form.fields.notification_type.choices %}
+                                        <option value="{{ value }}"
+                                                {% if form.notification_type.value == value %}selected{% endif %}>
+                                            {{ display }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.notification_type.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.notification_type.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }} <span class="text-danger">*</span></label>
+                        {{ form.title }}
+                        <div class="char-counter" id="title-counter">0 / 255 characters</div>
+                        {% if form.title.errors %}
+                            <div class="text-danger">
+                                {% for error in form.title.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.message.id_for_label }}" class="form-label">{{ form.message.label }} <span class="text-danger">*</span></label>
+                        {{ form.message }}
+                        <div class="char-counter" id="message-counter">0 / 1000 characters</div>
+                        {% if form.message.errors %}
+                            <div class="text-danger">
+                                {% for error in form.message.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'notification_list' %}" class="btn btn-secondary">
+                            <i class="mdi mdi-cancel"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="mdi mdi-send"></i> {{ submit_button }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Preview Section -->
+            <div class="preview-section" id="preview-section" style="display: none;">
+                <h5><i class="mdi mdi-eye"></i> Preview</h5>
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="mdi mdi-bell" style="font-size: 1.2rem;"></i>
+                            <small class="text-muted ms-2" id="preview-timestamp">Just now</small>
+                        </div>
+                        <h6 class="card-title" id="preview-title">Notification Title</h6>
+                        <p class="card-text" id="preview-message">Your message will appear here...</p>
+                        <small class="text-muted">From: {{ user.get_full_name|default:user.username }}</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tips Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="mdi mdi-lightbulb-outline"></i> Tips for Better Notifications</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="mdi mdi-check-circle text-success me-2"></i>
+                            <strong>Use clear, concise titles</strong> that describe the action needed
+                        </li>
+                        <li class="mb-2">
+                            <i class="mdi mdi-check-circle text-success me-2"></i>
+                            <strong>Choose appropriate priority levels</strong> based on urgency
+                        </li>
+                        <li class="mb-2">
+                            <i class="mdi mdi-check-circle text-success me-2"></i>
+                            <strong>Keep messages brief</strong> while providing all necessary information
+                        </li>
+                        <li class="mb-2">
+                            <i class="mdi mdi-check-circle text-success me-2"></i>
+                            <strong>Use emojis sparingly</strong> and only when they add clarity
+                        </li>
+                        <li class="mb-0">
+                            <i class="mdi mdi-check-circle text-success me-2"></i>
+                            <strong>Be professional</strong> and respect the recipient's time
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const titleInput = document.getElementById('id_title');
+    const messageInput = document.getElementById('id_message');
+    const notificationTypeSelect = document.getElementById('id_notification_type');
+    const titleCounter = document.getElementById('title-counter');
+    const messageCounter = document.getElementById('message-counter');
+    const previewSection = document.getElementById('preview-section');
+    const previewTitle = document.getElementById('preview-title');
+    const previewMessage = document.getElementById('preview-message');
+
+    // Character counters
+    function updateCounters() {
+        const titleLength = titleInput.value.length;
+        const messageLength = messageInput.value.length;
+
+        titleCounter.textContent = `${titleLength} / 255 characters`;
+        titleCounter.style.color = titleLength > 240 ? '#dc3545' : '#6c757d';
+
+        messageCounter.textContent = `${messageLength} / 1000 characters`;
+        messageCounter.style.color = messageLength > 950 ? '#dc3545' : '#6c757d';
+    }
+
+    // Live preview
+    function updatePreview() {
+        const title = titleInput.value.trim() || 'Notification Title';
+        const message = messageInput.value.trim() || 'Your message will appear here...';
+
+        previewTitle.textContent = title;
+        previewMessage.textContent = message;
+
+        const hasContent = titleInput.value.trim() || messageInput.value.trim();
+        previewSection.style.display = hasContent ? 'block' : 'none';
+    }
+
+    // Event listeners
+    titleInput.addEventListener('input', function() {
+        updateCounters();
+        updatePreview();
+    });
+
+    messageInput.addEventListener('input', function() {
+        updateCounters();
+        updatePreview();
+    });
+
+    notificationTypeSelect.addEventListener('change', updatePreview);
+
+    // Initialize
+    updateCounters();
+    updatePreview();
+
+    // Form validation enhancement
+    const form = document.getElementById('notification-form');
+
+    form.addEventListener('submit', function(e) {
+        const recipient = document.getElementById('recipient-select').value;
+
+        if (!recipient) {
+            e.preventDefault();
+            alert('Please select a recipient');
+            return false;
+        }
+
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i> Sending...';
+        submitBtn.disabled = true;
+
+        // Re-enable button if form submission fails (though this might not trigger on success)
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 5000);
+    });
+});
+
+// Notification type color mapping for visual feedback
+const typeColors = {
+    'info': '#007bff',
+    'success': '#28a745',
+    'warning': '#ffc107',
+    'error': '#dc3545',
+    'reminder': '#6f42c1'
+};
+</script>
+{% endblock js %}

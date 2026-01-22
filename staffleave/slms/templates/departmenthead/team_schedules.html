@@ -13,7 +13,7 @@
             </div>
             <div>
                 <h2 style="margin: 0; font-size: 1.75rem; font-weight: 600;">Team Schedules</h2>
-                <p style="margin: 0.25rem 0 0 0; opacity: 0.9; font-size: 0.875rem;">{{ department.name }} - Manage team schedules and view staff availability</p>
+                <p style="margin: 0.25rem 0 0 0; opacity: 0.9; font-size: 0.875rem;">{{ department.name }} - Manage team schedules and view employee availability</p>
             </div>
         </div>
         <a href="{% url 'dh_home' %}" style="color: var(--white); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.1); border-radius: var(--radius-md); transition: background 0.2s ease;">
@@ -27,7 +27,7 @@
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
     <div class="modern-card" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: var(--white); text-align: center;">
         <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">{{ department_staff|length }}</div>
-        <div style="font-size: 0.875rem; opacity: 0.9;">Total Staff</div>
+        <div style="font-size: 0.875rem; opacity: 0.9;">Total Employee</div>
     </div>
     
     <div class="modern-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: var(--white); text-align: center;">
@@ -36,33 +36,33 @@
     </div>
 </div>
 
-<!-- Department Staff -->
+<!-- Department Employee -->
 <div class="modern-card" style="margin-bottom: 2rem;">
     <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
         <i class="material-icons" style="color: var(--primary-blue);">people</i>
-        Department Staff ({{ department_staff|length }})
+        Department Employee ({{ department_staff|length }})
     </h3>
     
-    {% if department_staff %}
+    {% if department_employee %}
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
-            {% for staff in department_staff %}
+            {% for employee in department_employee %}
             <div style="padding: 1rem; background: var(--light-gray); border-radius: var(--radius-md); border: 1px solid var(--medium-gray);">
                 <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-                    {% if staff.admin.profile_pic %}
-                    <img src="/{{ staff.admin.profile_pic }}" alt="{{ staff.admin.get_full_name }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                    {% if employee.admin.profile_pic %}
+                    <img src="{{ employee.admin.profile_pic.url }}" alt="{{ employee.admin.get_full_name }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
                     {% else %}
                     <div style="width: 50px; height: 50px; border-radius: 50%; background: var(--medium-gray); display: flex; align-items: center; justify-content: center;">
                         <i class="material-icons" style="color: var(--text-secondary);">person</i>
                     </div>
                     {% endif %}
                     <div>
-                        <div style="font-weight: 600; color: var(--text-primary);">{{ staff.admin.get_full_name }}</div>
-                        <div style="font-size: 0.875rem; color: var(--text-secondary);">@{{ staff.admin.username }}</div>
+                        <div style="font-weight: 600; color: var(--text-primary);">{{ employee.admin.get_full_name }}</div>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary);">@{{ employee.admin.username }}</div>
                     </div>
                 </div>
                 <div style="font-size: 0.875rem; color: var(--text-secondary);">
                     <i class="material-icons" style="font-size: 16px; vertical-align: middle;">email</i>
-                    {{ staff.admin.email }}
+                    {{ employee.admin.email }}
                 </div>
             </div>
             {% endfor %}
@@ -70,7 +70,7 @@
     {% else %}
         <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
             <i class="material-icons" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">people_outline</i>
-            <p>No staff members in this department</p>
+            <p>No employee members in this department</p>
         </div>
     {% endif %}
 </div>
@@ -83,11 +83,12 @@
     </h3>
     
     {% if upcoming_leaves %}
-        <div class="table-container" style="overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--medium-gray);">
+        <div class="table-container" style="overflow-x: auto; overflow-y: auto; border-radius: var(--radius-lg); border: 1px solid var(--medium-gray);">
             <table class="modern-table" style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: var(--light-gray);">
-                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">Staff Name</th>
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left; width: 80px;">Photo</th>
+                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">Employee Name</th>
                         <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">Leave Type</th>
                         <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">From Date</th>
                         <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">To Date</th>
@@ -98,6 +99,17 @@
                 <tbody>
                     {% for leave in upcoming_leaves %}
                     <tr>
+                        <td style="padding: 1rem;">
+                            <div style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden; border: 2px solid var(--medium-gray);">
+                                {% if leave.staff_id.admin.profile_pic %}
+                                    <img src="{{ leave.staff_id.admin.profile_pic.url }}" alt="{{ leave.staff_id.admin.get_full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                {% else %}
+                                    <div style="width: 100%; height: 100%; background: var(--light-gray); display: flex; align-items: center; justify-content: center;">
+                                        <i class="material-icons" style="color: var(--text-secondary);">person</i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </td>
                         <td style="padding: 1rem; font-weight: 600; color: var(--text-primary);">{{ leave.staff_id.admin.get_full_name }}</td>
                         <td style="padding: 1rem; color: var(--text-secondary);">{{ leave.leave_type_name|default:leave.leave_type.name|default:"N/A" }}</td>
                         <td style="padding: 1rem; color: var(--text-secondary);">{{ leave.from_date|date:"M d, Y" }}</td>

@@ -4,37 +4,37 @@
     <head>
         <!-- Title -->
         <title>{% block title %}HarmonyLeave (E/SLMS){% endblock %}</title>
-        
+
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
         <meta charset="UTF-8">
         <meta name="description" content="HarmonyLeave (E/SLMS) - Modern Dashboard" />
-        <meta name="keywords" content="staff,leave,management,dashboard" />
+        <meta name="keywords" content="employee,leave,management,dashboard" />
         <meta name="author" content="HarmonyLeave" />
-        
+
         <!-- Favicon -->
         <link rel="icon" type="image/x-icon" href="{% static 'assets/images/favicon.ico' %}">
         <link rel="shortcut icon" type="image/x-icon" href="{% static 'assets/images/favicon.ico' %}">
-        
+
         <!-- Google Fonts -->
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <!-- Material Icons - Multiple sources for better loading -->
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        
+
         <!-- Reset any existing styles first -->
         <style>
             /* Reset to prevent conflicts */
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { font-family: 'Inter', sans-serif !important; }
         </style>
-        
+
         <!-- DataTables for tables -->
         <link rel="stylesheet" href="{% static 'assets/plugins/datatables/datatables.min.css' %}">
-        
+
         <!-- Our Custom Styles - Load Last to Override Everything -->
         <link href="{% static 'assets/css/custom.css' %}?v=2024e" rel="stylesheet" type="text/css"/>
-        
+
         <style>
             /* Force modern layout immediately */
             body {
@@ -43,7 +43,7 @@
                 background: var(--light-gray, #F8FAFC) !important;
                 font-family: 'Inter', sans-serif !important;
             }
-            
+
             /* Critical Material Icons fix */
             .material-icons {
                 font-family: 'Material Icons' !important;
@@ -61,17 +61,17 @@
                 -webkit-font-feature-settings: "liga" !important;
                 font-feature-settings: "liga" !important;
             }
-            
+
             /* Hide all old Materialize elements */
             .mn-content, .mn-inner, .middle-content, .side-nav, .fixed-sidebar {
                 display: none !important;
             }
-            
+
             /* Show only our modern components */
             .dashboard-container, .modern-header, .modern-sidebar, .main-content {
                 display: block !important;
             }
-            
+
             .errorWrap {
                 padding: 1rem;
                 margin: 0 0 1.5rem 0;
@@ -81,7 +81,7 @@
                 color: #dc2626;
                 font-weight: 500;
             }
-            
+
             .succWrap {
                 padding: 1rem;
                 margin: 0 0 1.5rem 0;
@@ -91,10 +91,10 @@
                 color: #16a34a;
                 font-weight: 500;
             }
-            
+
             /* Modern sidebar toggle for mobile */
             .sidebar-toggle {
-                display: none;
+                display: none !important;
                 position: fixed;
                 top: 20px;
                 left: 20px;
@@ -108,11 +108,11 @@
                 cursor: pointer;
                 transition: all 0.3s ease;
             }
-            
+
             .sidebar-toggle:hover {
                 transform: scale(1.1);
             }
-            
+
             .sidebar-overlay {
                 display: none;
                 position: fixed;
@@ -123,33 +123,268 @@
                 background: rgba(0, 0, 0, 0.5);
                 z-index: 999;
             }
-            
+
             @media (max-width: 1024px) {
                 .sidebar-toggle {
-                    display: flex;
+                    display: flex !important;
                     align-items: center;
                     justify-content: center;
                 }
-                
+
                 .modern-sidebar {
                     transform: translateX(-100%);
                     transition: transform 0.3s ease;
                 }
-                
+
                 .modern-sidebar.active {
                     transform: translateX(0);
                 }
-                
+
                 .sidebar-overlay.active {
                     display: block;
                 }
-                
+
                 .main-content {
                     margin-left: 0;
                 }
             }
         </style>
         
+        <!-- Table Scrolling Styles -->
+        <style>
+            /* Enhanced table container scrolling */
+            .table-container {
+                scrollbar-width: thin;
+                scrollbar-color: rgba(107, 114, 128, 0.3) transparent;
+                scroll-behavior: smooth;
+            }
+            
+            .table-container::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+            
+            .table-container::-webkit-scrollbar-track {
+                background: transparent;
+                border-radius: 4px;
+            }
+            
+            .table-container::-webkit-scrollbar-thumb {
+                background: rgba(107, 114, 128, 0.3);
+                border-radius: 4px;
+            }
+            
+            .table-container::-webkit-scrollbar-thumb:hover {
+                background: rgba(107, 114, 128, 0.5);
+            }
+            
+            /* Sticky table headers when scrolling vertically */
+            .table-container table thead {
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                background: var(--white);
+            }
+            
+            .table-container table thead th {
+                background: var(--white);
+                box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+            }
+            
+            /* Sidebar Navigation Icon and Text Alignment */
+            .sidebar-nav a {
+                display: flex !important;
+                align-items: center !important;
+                padding: 0.6875rem 1.5rem !important;
+                font-size: 0.9375rem !important;
+                line-height: 1.5 !important;
+            }
+            
+            .sidebar-nav a .material-icons {
+                font-size: 1.125rem !important;
+                width: 22px !important;
+                height: 22px !important;
+                margin-right: 0.75rem !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                flex-shrink: 0 !important;
+                vertical-align: middle !important;
+            }
+            
+            /* Form input field width constraints - standard size for all inputs */
+            .form-input,
+            input.form-input,
+            select.form-input,
+            textarea.form-input,
+            input[type="text"]:not(.filter-input):not(.search-input input),
+            input[type="email"]:not(.filter-input):not(.search-input input),
+            input[type="password"]:not(.filter-input):not(.search-input input),
+            input[type="number"]:not(.filter-input):not(.search-input input),
+            input[type="date"]:not(.filter-input):not(.search-input input),
+            input[type="time"]:not(.filter-input):not(.search-input input),
+            input[type="tel"]:not(.filter-input):not(.search-input input),
+            select:not([multiple]):not(.filter-input):not(.search-input select) {
+                max-width: 350px !important;
+            }
+            
+            /* Full width for textareas and specific fields that need more space */
+            textarea.form-input,
+            textarea {
+                max-width: 100% !important;
+            }
+            
+            /* Filter and search inputs in tables can be full width */
+            .filter-input,
+            .search-input input,
+            table .form-input,
+            table select,
+            table input {
+                max-width: 100% !important;
+            }
+            
+            /* Responsive form inputs */
+            @media (max-width: 768px) {
+                .form-input,
+                input.form-input,
+                select.form-input,
+                input[type="text"],
+                input[type="email"],
+                input[type="password"],
+                input[type="number"],
+                input[type="date"],
+                select {
+                    max-width: 100% !important;
+                }
+            }
+            
+            /* Button sizing - medium width for all buttons */
+            .btn-primary,
+            .btn-secondary,
+            .btn,
+            button:not([type="submit"]):not(.filter-input):not(.search-input button):not(.header-actions button):not(.notification-btn):not(.sidebar-toggle):not(#themeToggle) {
+                width: auto !important;
+                min-width: 150px !important;
+                max-width: 250px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            
+            /* Header/navigation buttons should remain compact */
+            .header-actions button,
+            .notification-btn,
+            .sidebar-toggle,
+            #themeToggle {
+                width: auto !important;
+                min-width: auto !important;
+                max-width: none !important;
+                padding: 0.5rem !important;
+            }
+            
+            /* Override inline width styles for buttons */
+            button[style*="width: 100%"]:not(.filter-input):not(.search-input button):not([style*="flex: 1"]):not(.form-actions button):not(.header-actions button):not(.notification-btn):not(.sidebar-toggle):not(#themeToggle),
+            .btn-primary[style*="width: 100%"]:not([style*="flex: 1"]):not(.form-actions .btn-primary):not(.header-actions .btn-primary),
+            .btn-secondary[style*="width: 100%"]:not([style*="flex: 1"]):not(.form-actions .btn-secondary):not(.header-actions .btn-secondary),
+            .btn[style*="width: 100%"]:not(.filter-input):not(.search-input .btn):not([style*="flex: 1"]):not(.form-actions .btn):not(.header-actions .btn) {
+                width: auto !important;
+                min-width: 150px !important;
+                max-width: 250px !important;
+            }
+            
+            /* Buttons with flex: 1 should have minimum width but can grow */
+            button[style*="flex: 1"],
+            .btn-primary[style*="flex: 1"],
+            .btn-secondary[style*="flex: 1"],
+            .btn[style*="flex: 1"] {
+                min-width: 150px !important;
+                flex: 1 1 150px !important;
+            }
+            
+            /* Full width buttons for form action areas */
+            .form-actions .btn-primary,
+            .form-actions .btn-secondary,
+            .form-actions button {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            
+            /* Responsive button sizing */
+            @media (max-width: 768px) {
+                .btn-primary,
+                .btn-secondary,
+                .btn,
+                button:not(.header-actions button):not(.notification-btn):not(.sidebar-toggle):not(#themeToggle) {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    min-width: auto !important;
+                    flex: none !important;
+                }
+                
+                /* Keep header buttons compact on mobile */
+                .header-actions button,
+                .notification-btn,
+                .sidebar-toggle,
+                #themeToggle {
+                    width: auto !important;
+                    min-width: auto !important;
+                    max-width: none !important;
+                }
+            }
+            
+            /* Compact table styling for better screen fit */
+            .table-container {
+                max-height: calc(100vh - 300px) !important;
+            }
+            
+            .modern-table {
+                font-size: 0.875rem;
+            }
+            
+            .modern-table thead th {
+                padding: 0.625rem 0.75rem;
+                font-size: 0.8rem;
+            }
+            
+            .modern-table td {
+                padding: 0.625rem 0.75rem;
+                font-size: 0.875rem;
+            }
+            
+            /* Responsive table adjustments */
+            @media (max-width: 1024px) {
+                .table-container {
+                    max-height: calc(100vh - 250px) !important;
+                }
+                
+                .modern-table {
+                    font-size: 0.8rem;
+                }
+                
+                .modern-table thead th,
+                .modern-table td {
+                    padding: 0.5rem 0.625rem;
+                    font-size: 0.8rem;
+                }
+            }
+            
+            @media (max-width: 768px) {
+                .table-container {
+                    max-height: calc(100vh - 200px) !important;
+                }
+                
+                .modern-table {
+                    font-size: 0.75rem;
+                }
+                
+                .modern-table thead th,
+                .modern-table td {
+                    padding: 0.5rem;
+                    font-size: 0.75rem;
+                }
+            }
+        </style>
+
         {% block extra_css %}{% endblock %}
     </head>
     <body>
@@ -159,60 +394,65 @@
             <button class="sidebar-toggle" onclick="toggleSidebar()">
                 <i class="material-icons">menu</i>
             </button>
-            
+
             <!-- Sidebar Overlay for Mobile -->
             <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-        
+
         <!-- Modern Header -->
         <header class="modern-header">
             <a href="{% if user.user_type == '1' %}{% url 'admin_home' %}{% elif user.user_type == '2' %}{% url 'staff_home' %}{% elif user.user_type == '3' %}{% url 'dh_home' %}{% elif user.user_type == '4' %}{% url 'hr_home' %}{% else %}{% url 'index' %}{% endif %}" class="header-brand" style="text-decoration: none; color: inherit; display: flex; align-items: center; cursor: pointer;">
                 <img src="{% static 'assets/images/lms.png' %}" alt="HarmonyLeave (E/SLMS)" style="width: 40px; height: 40px; margin-right: 0.75rem; border-radius: 50%; object-fit: cover;">
                 HarmonyLeave (E/SLMS)
             </a>
-            
+
             <div class="header-actions">
-                {% if user.user_type == '1' %}
-                    <!-- Admin Notifications -->
-                    <div class="notification-dropdown" style="position: relative;">
-                        <button class="notification-btn" onclick="toggleNotifications()" style="background: none; border: none; cursor: pointer; padding: 0.5rem; border-radius: 50%; transition: background 0.2s ease;">
-                            <i class="material-icons" style="color: var(--text-secondary);">notifications</i>
-                            {% if staff_leave %}
-                                <span class="notification-badge" style="position: absolute; top: 0; right: 0; background: #ef4444; color: white; border-radius: 50%; width: 8px; height: 8px;"></span>
-                            {% endif %}
-                        </button>
-                        
-                        <div class="notification-panel" id="notificationPanel" style="display: none; position: absolute; top: 100%; right: 0; background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); width: 300px; max-height: 400px; overflow-y: auto; z-index: 1000;">
-                            <div style="padding: 1rem; border-bottom: 1px solid var(--medium-gray);">
-                                <h4 style="margin: 0; font-size: 1rem; color: var(--text-primary);">Notifications</h4>
-                            </div>
-                            {% for leave in staff_leave %}
-                                {% if leave.status == 0 %}
-                                    <a href="{% url 'staff_leave_view_admin' %}" style="display: block; padding: 1rem; text-decoration: none; border-bottom: 1px solid var(--medium-gray); transition: background 0.2s ease;">
-                                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                            <div style="width: 40px; height: 40px; background: rgba(45, 90, 160, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                                <i class="material-icons" style="color: var(--primary-blue); font-size: 20px;">person</i>
-                                            </div>
-                                            <div>
-                                                <div style="font-weight: 500; color: var(--text-primary); font-size: 0.875rem;">Leave Request</div>
-                                                <div style="color: var(--text-secondary); font-size: 0.75rem;">{{leave.staff_id.admin.first_name}} {{leave.staff_id.admin.last_name}} applied for leave</div>
-                                            </div>
-                                        </div>
-                                    </a>
-                                {% endif %}
-                            {% empty %}
-                                <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
-                                    <i class="material-icons" style="font-size: 2rem; margin-bottom: 0.5rem;">notifications_none</i>
-                                    <div>No new notifications</div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                {% endif %}
-                
                 <!-- Theme Toggle -->
                 <button id="themeToggle" title="Toggle theme" aria-label="Toggle theme" style="background: none; border: none; cursor: pointer; padding: 0.5rem; border-radius: 50%; transition: background 0.2s ease;">
                     <i class="material-icons" id="themeIcon">dark_mode</i>
                 </button>
+
+                <!-- Notifications (top nav) -->
+                <div class="notification-dropdown" style="position: relative;">
+                    <button class="notification-btn" onclick="toggleNotifications()" style="background: none; border: none; cursor: pointer; padding: 0.5rem; border-radius: 50%; transition: background 0.2s ease; position: relative;">
+                        <i class="material-icons" style="color: var(--text-secondary);">notifications</i>
+                        <span id="notificationBadge" style="position: absolute; top: 6px; right: 6px; background: #ef4444; color: white; border-radius: 50%; width: 8px; height: 8px; display: none;"></span>
+                    </button>
+
+                    <div class="notification-panel" id="notificationPanel" style="display: none; position: absolute; top: 110%; right: 0; background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); width: 380px; max-height: 600px; flex-direction: column; z-index: 1000; border: 1px solid rgba(0,0,0,0.05);">
+                        <div style="padding: 1rem; border-bottom: 1px solid var(--medium-gray); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+                            <h4 style="margin: 0; font-size: 1rem; color: var(--text-primary);">Notifications</h4>
+                            <span id="notificationCount" style="color: var(--text-secondary); font-size: 0.85rem;">Loading...</span>
+                        </div>
+                        
+                        <div id="notificationList" style="flex: 1; overflow-y: auto; padding: 0; min-height: 200px; max-height: 300px;">
+                            <div style="padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
+                                <i class="material-icons" style="font-size: 2rem; margin-bottom: 0.5rem; color: #cbd5e0;">notifications_none</i>
+                                <div>Loading notifications...</div>
+                            </div>
+                        </div>
+                        
+                        {% if user.user_type == '1' or user.user_type == '3' or user.user_type == '4' %}
+                        <!-- Send Notification Form (Admin, HR, Department Head only) -->
+                        <div style="padding: 1rem; border-top: 1px solid var(--medium-gray); background: var(--light-gray); flex-shrink: 0;">
+                            <div style="margin-bottom: 0.75rem;">
+                                <select id="notificationRecipient" style="width: 100%; padding: 0.5rem; border: 1px solid var(--medium-gray); border-radius: var(--radius-sm); font-size: 0.875rem; background: var(--white);">
+                                    <option value="">Select recipient...</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="notificationMessage" placeholder="Type a message..." style="flex: 1; padding: 0.5rem; border: 1px solid var(--medium-gray); border-radius: var(--radius-sm); font-size: 0.875rem;" onkeypress="if(event.key === 'Enter') sendQuickNotification()">
+                                <button onclick="sendQuickNotification()" style="padding: 0.5rem 1rem; background: var(--primary-blue); color: var(--white); border: none; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 500;">
+                                    <i class="material-icons" style="font-size: 1.25rem;">send</i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div style="padding: 0.75rem; border-top: 1px solid var(--medium-gray); text-align: center; flex-shrink: 0;">
+                            <a href="{% url 'notification_list' %}" style="color: var(--primary-blue); text-decoration: none; font-size: 0.875rem; font-weight: 500;">View All Notifications</a>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- User Profile -->
                 <div class="user-profile" style="display: flex; align-items: center; gap: 0.75rem;">
@@ -228,7 +468,7 @@
                 </div>
             </div>
         </header>
-        
+
         <!-- Modern Sidebar -->
         <aside class="modern-sidebar" id="sidebar">
             <!-- Profile Section -->
@@ -241,7 +481,7 @@
                 <div class="profile-name">{{ user.first_name }} {{ user.last_name }}</div>
                 <div class="profile-email">{{ user.email }}</div>
             </div>
-            
+
             <!-- Navigation Menu -->
             <nav>
                 <ul class="sidebar-nav">
@@ -251,21 +491,20 @@
                         <li><a href="{% url 'admin_calendar' %}" class="nav-link"><i class="material-icons">calendar_today</i>Calendar</a></li>
                         <li><a href="{% url 'profile' %}" class="nav-link"><i class="material-icons">person</i>My Profile</a></li>
                         <li><a href="{% url 'change_password' %}" class="nav-link"><i class="material-icons">lock</i>Change Password</a></li>
-                        
+
                         <!-- User Management Section -->
                         <li style="margin-top: 1.5rem;">
                             <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;"></div>
                         </li>
                         <!-- Manage Users removed for Admin UI to avoid duplication. Admins can add users and view all users from below. -->
-                        
-                        <!-- Staff Management Section -->
+
+                        <!-- Employee Management Section -->
                         <li style="margin-top: 1.5rem;">
-                            <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Staff Management</div>
+                            <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Employee Management</div>
                         </li>
-                        <li><a href="{% url 'admin_create_user' %}" class="nav-link"><i class="material-icons">person_add</i>Add User</a></li>
-                        <li><a href="{% url 'view_staff' %}" class="nav-link"><i class="material-icons">people</i>View Users</a></li>
+                        <li><a href="{% url 'admin_manage_users' %}" class="nav-link"><i class="material-icons">people</i>Manage Users</a></li>
                         <li><a href="{% url 'staff_leave_view_admin' %}" class="nav-link"><i class="material-icons">event_note</i>Leave Requests</a></li>
-                        
+
                         <!-- System Management Section -->
                         <li style="margin-top: 1.5rem;">
                             <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">System Management</div>
@@ -274,13 +513,14 @@
                         <li><a href="{% url 'admin_system_settings' %}" class="nav-link"><i class="material-icons">settings</i>System Settings</a></li>
                         <li><a href="{% url 'admin_manage_holidays' %}" class="nav-link"><i class="material-icons">celebration</i>Manage Holidays</a></li>
                         <li><a href="{% url 'admin_manage_events' %}" class="nav-link"><i class="material-icons">event</i>Manage Events</a></li>
-                        
+                        <li><a href="{% url 'admin_analytics' %}" class="nav-link"><i class="material-icons">analytics</i>Analytics Dashboard</a></li>
+
                     {% elif user.user_type == '3' %}
                         <!-- Department Head Navigation -->
                         <li><a href="{% url 'dh_home' %}" class="nav-link"><i class="material-icons">dashboard</i>Dashboard</a></li>
                         <li><a href="{% url 'profile' %}" class="nav-link"><i class="material-icons">person</i>My Profile</a></li>
                         <li><a href="{% url 'change_password' %}" class="nav-link"><i class="material-icons">lock</i>Change Password</a></li>
-                        
+
                         <!-- Leave Management Section -->
                         <li style="margin-top: 1.5rem;">
                             <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Leave Management</div>
@@ -288,21 +528,21 @@
                         <li><a href="{% url 'dh_review_leaves' %}" class="nav-link"><i class="material-icons">rate_review</i>Review Leaves</a></li>
                         <li><a href="{% url 'dh_calendar' %}" class="nav-link"><i class="material-icons">calendar_today</i>Department Calendar</a></li>
                         <li><a href="{% url 'dh_team_schedules' %}" class="nav-link"><i class="material-icons">schedule</i>Team Schedules</a></li>
-                        
+
                     {% elif user.user_type == '4' %}
                         <!-- HR Navigation -->
                         <li><a href="{% url 'hr_home' %}" class="nav-link"><i class="material-icons">dashboard</i>Dashboard</a></li>
                         <li><a href="{% url 'hr_calendar' %}" class="nav-link"><i class="material-icons">calendar_today</i>Calendar</a></li>
                         <li><a href="{% url 'profile' %}" class="nav-link"><i class="material-icons">person</i>My Profile</a></li>
                         <li><a href="{% url 'change_password' %}" class="nav-link"><i class="material-icons">lock</i>Change Password</a></li>
-                        
-                        <!-- Staff Management Section -->
+
+                        <!-- Employee Management Section -->
                         <li style="margin-top: 1.5rem;">
-                            <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Staff Management</div>
+                            <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Employee Management</div>
                         </li>
-                        <li><a href="{% url 'hr_manage_staff' %}" class="nav-link"><i class="material-icons">group</i>Manage Staff</a></li>
-                        <li><a href="{% url 'hr_add_staff' %}" class="nav-link"><i class="material-icons">person_add</i>Add Staff</a></li>
-                        
+                        <li><a href="{% url 'hr_manage_staff' %}" class="nav-link"><i class="material-icons">group</i>Manage Employee</a></li>
+                        <li><a href="{% url 'hr_add_staff' %}" class="nav-link"><i class="material-icons">person_add</i>Add Employee</a></li>
+
                         <!-- Leave Management Section -->
                         <li style="margin-top: 1.5rem;">
                             <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Leave Management</div>
@@ -311,20 +551,20 @@
                         <li><a href="{% url 'hr_set_entitlements' %}" class="nav-link"><i class="material-icons">event_available</i>Set Entitlements</a></li>
                         <li><a href="{% url 'hr_approve_leave' %}" class="nav-link"><i class="material-icons">check_circle</i>Approve Leave</a></li>
                         <li><a href="{% url 'hr_manage_holidays' %}" class="nav-link"><i class="material-icons">event</i>Public Holidays</a></li>
-                        
-                        <!-- Reports Section -->
+
+                        <!-- Analytics Section -->
                         <li style="margin-top: 1.5rem;">
-                            <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Reports</div>
+                            <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Analytics</div>
                         </li>
-                        <li><a href="{% url 'hr_reports' %}" class="nav-link"><i class="material-icons">assessment</i>Generate Reports</a></li>
-                        
+                        <li><a href="{% url 'hr_analytics' %}" class="nav-link"><i class="material-icons">analytics</i>Analytics Dashboard</a></li>
+
                     {% elif user.user_type == '2' %}
-                        <!-- Staff Navigation -->
+                        <!-- Employee Navigation -->
                         <li><a href="{% url 'staff_home' %}" class="nav-link"><i class="material-icons">dashboard</i>Dashboard</a></li>
                         <li><a href="{% url 'staff_calendar' %}" class="nav-link"><i class="material-icons">calendar_today</i>Calendar</a></li>
                         <li><a href="{% url 'profile' %}" class="nav-link"><i class="material-icons">person</i>My Profile</a></li>
                         <li><a href="{% url 'change_password' %}" class="nav-link"><i class="material-icons">lock</i>Change Password</a></li>
-                        
+
                         <!-- Leave Section -->
                         <li style="margin-top: 1.5rem;">
                             <div style="padding: 0 1.5rem; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Leave</div>
@@ -338,7 +578,7 @@
                         <li><a href="{% url 'profile' %}" class="nav-link"><i class="material-icons">person</i>My Profile</a></li>
                         <li><a href="{% url 'change_password' %}" class="nav-link"><i class="material-icons">lock</i>Change Password</a></li>
                     {% endif %}
-                    
+
                     <!-- Sign Out -->
                     <li style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--medium-gray);">
                         <a href="{% url 'logout' %}" class="nav-link" style="color: #ef4444;"><i class="material-icons">exit_to_app</i>Sign Out</a>
@@ -346,48 +586,237 @@
                 </ul>
             </nav>
         </aside>
-        
+
             <!-- Main Content -->
             <main class="main-content">
                 {% block content %}
                 {% endblock %}
             </main>
         </div> <!-- End dashboard-container -->
-        
+
         <!-- JavaScript -->
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script src="{% static 'assets/plugins/datatables/datatables.min.js'%}"></script>
         <script src="https://cdn.datatables.net/1.10.4/js/jquery.dataTables.min.js"></script>
-        
+
         <script>
             // DataTables initialization removed from base.html
             // Pages can initialize their own tables as needed
-            
+
             // Sidebar toggle for mobile
             function toggleSidebar() {
                 const sidebar = document.getElementById('sidebar');
                 const overlay = document.querySelector('.sidebar-overlay');
-                
+
                 sidebar.classList.toggle('active');
                 overlay.classList.toggle('active');
             }
-            
-            // Notification dropdown
+
+            // Notification dropdown toggle and loading
             function toggleNotifications() {
                 const panel = document.getElementById('notificationPanel');
-                panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+                if (!panel) return;
+                const isVisible = panel.style.display === 'flex' || panel.style.display === 'block';
+                panel.style.display = isVisible ? 'none' : 'flex';
+                
+                if (!isVisible) {
+                    loadNotifications();
+                    {% if user.user_type == '1' or user.user_type == '3' or user.user_type == '4' %}
+                    loadNotificationUsers();
+                    {% endif %}
+                }
             }
             
-            // Close notifications when clicking outside
-            document.addEventListener('click', function(event) {
-                const notificationBtn = document.querySelector('.notification-btn');
-                const notificationPanel = document.getElementById('notificationPanel');
+            // Load notifications from API
+            function loadNotifications() {
+                const notificationList = document.getElementById('notificationList');
+                const notificationCount = document.getElementById('notificationCount');
+                const notificationBadge = document.getElementById('notificationBadge');
                 
-                if (notificationPanel && !notificationBtn.contains(event.target) && !notificationPanel.contains(event.target)) {
-                    notificationPanel.style.display = 'none';
+                // Fetch unread count
+                fetch('{% url "notification_unread_count" %}')
+                    .then(response => response.json())
+                    .then(data => {
+                        const unreadCount = data.unread_count || 0;
+                        if (notificationCount) {
+                            notificationCount.textContent = unreadCount > 0 ? `${unreadCount} new` : 'No new';
+                        }
+                        if (notificationBadge) {
+                            if (unreadCount > 0) {
+                                notificationBadge.style.display = 'block';
+                            } else {
+                                notificationBadge.style.display = 'none';
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error loading notification count:', error));
+                
+                // Fetch recent notifications
+                fetch('{% url "notification_recent" %}?limit=10')
+                    .then(response => response.json())
+                    .then(data => {
+                        const notifications = data.notifications || [];
+                        
+                        if (notifications.length === 0) {
+                            notificationList.innerHTML = `
+                                <div style="padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
+                                    <i class="material-icons" style="font-size: 2rem; margin-bottom: 0.5rem; color: #cbd5e0;">notifications_none</i>
+                                    <div>No notifications</div>
+                                </div>
+                            `;
+                            return;
+                        }
+                        
+                        let html = '';
+                        notifications.forEach(notif => {
+                            const typeColors = {
+                                'info': '#3b82f6',
+                                'warning': '#f59e0b',
+                                'success': '#10b981',
+                                'error': '#ef4444',
+                                'reminder': '#8b5cf6'
+                            };
+                            const typeIcons = {
+                                'info': 'info',
+                                'warning': 'warning',
+                                'success': 'check_circle',
+                                'error': 'error',
+                                'reminder': 'schedule'
+                            };
+                            const color = typeColors[notif.notification_type] || '#6b7280';
+                            const icon = typeIcons[notif.notification_type] || 'notifications';
+                            const unreadStyle = !notif.is_read ? 'background: rgba(59, 130, 246, 0.05); border-left: 3px solid ' + color + ';' : '';
+                            
+                            html += `
+                                <div style="padding: 1rem; border-bottom: 1px solid var(--medium-gray); cursor: pointer; ${unreadStyle}" 
+                                     onclick="window.location.href='{% url 'notification_detail' 0 %}'.replace('0', '${notif.id}')"
+                                     onmouseover="this.style.background='rgba(0,0,0,0.02)'"
+                                     onmouseout="this.style.background='${unreadStyle ? 'rgba(59, 130, 246, 0.05)' : 'transparent'}'">
+                                    <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                                        <div style="width: 36px; height: 36px; border-radius: 50%; background: ${color}20; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="material-icons" style="font-size: 1.25rem; color: ${color};">${icon}</i>
+                                        </div>
+                                        <div style="flex: 1; min-width: 0;">
+                                            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.875rem; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                ${notif.title}
+                                            </div>
+                                            <div style="color: var(--text-secondary); font-size: 0.75rem; line-height: 1.4; margin-bottom: 0.25rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                                ${notif.message}
+                                            </div>
+                                            <div style="color: var(--text-secondary); font-size: 0.7rem;">
+                                                ${notif.time_ago}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        notificationList.innerHTML = html;
+                    })
+                    .catch(error => {
+                        console.error('Error loading notifications:', error);
+                        notificationList.innerHTML = `
+                            <div style="padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
+                                <i class="material-icons" style="font-size: 2rem; margin-bottom: 0.5rem; color: #cbd5e0;">error_outline</i>
+                                <div>Error loading notifications</div>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // Load users for notification dropdown (Admin/HR/HOD only)
+            function loadNotificationUsers() {
+                const recipientSelect = document.getElementById('notificationRecipient');
+                if (!recipientSelect) return;
+                
+                fetch('{% url "notification_get_users" %}')
+                    .then(response => response.json())
+                    .then(data => {
+                        const users = data.users || [];
+                        recipientSelect.innerHTML = '<option value="">Select recipient...</option>';
+                        users.forEach(user => {
+                            const option = document.createElement('option');
+                            option.value = user.id;
+                            option.textContent = `${user.name}${user.email ? ' (' + user.email + ')' : ''}`;
+                            recipientSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error loading users:', error));
+            }
+            
+            // Send quick notification
+            function sendQuickNotification() {
+                const recipientSelect = document.getElementById('notificationRecipient');
+                const messageInput = document.getElementById('notificationMessage');
+                
+                if (!recipientSelect || !messageInput) return;
+                
+                const recipientId = recipientSelect.value;
+                const message = messageInput.value.trim();
+                
+                if (!recipientId) {
+                    alert('Please select a recipient');
+                    return;
+                }
+                
+                if (!message) {
+                    alert('Please enter a message');
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('recipient_id', recipientId);
+                formData.append('message', message);
+                formData.append('csrfmiddlewaretoken', getCsrfToken());
+                
+                fetch('{% url "notification_quick_send" %}', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        messageInput.value = '';
+                        recipientSelect.value = '';
+                        loadNotifications(); // Refresh notifications
+                        // Show success message
+                        const successMsg = document.createElement('div');
+                        successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 1rem; border-radius: 8px; z-index: 10000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);';
+                        successMsg.textContent = 'Notification sent successfully!';
+                        document.body.appendChild(successMsg);
+                        setTimeout(() => successMsg.remove(), 3000);
+                    } else {
+                        alert('Error: ' + (data.message || 'Failed to send notification'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending notification:', error);
+                    alert('Error sending notification. Please try again.');
+                });
+            }
+            
+            // Load notifications on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                loadNotifications();
+                // Load users if user can send notifications
+                {% if user.user_type == '1' or user.user_type == '3' or user.user_type == '4' %}
+                loadNotificationUsers();
+                {% endif %}
+                // Refresh notifications every 60 seconds
+                setInterval(loadNotifications, 60000);
+            });
+
+            // Close notification panel on outside click
+            document.addEventListener('click', function(event) {
+                const btn = document.querySelector('.notification-btn');
+                const panel = document.getElementById('notificationPanel');
+                if (!btn || !panel) return;
+                if (!btn.contains(event.target) && !panel.contains(event.target)) {
+                    panel.style.display = 'none';
                 }
             });
-            
+
             // Active navigation link highlighting
             document.addEventListener('DOMContentLoaded', function() {
                 // Theme setup - apply persisted theme or system preference
@@ -426,14 +855,14 @@
                 }
                 const currentPath = window.location.pathname;
                 const navLinks = document.querySelectorAll('.nav-link');
-                
+
                 navLinks.forEach(link => {
                     if (link.getAttribute('href') === currentPath) {
                         link.classList.add('active');
                     }
                 });
             });
-            
+
             // Smooth hover effects
             document.querySelectorAll('.nav-link').forEach(link => {
                 link.addEventListener('mouseenter', function() {
@@ -441,15 +870,27 @@
                         this.style.background = 'rgba(45, 90, 160, 0.05)';
                     }
                 });
-                
+
                 link.addEventListener('mouseleave', function() {
                     if (!this.classList.contains('active')) {
                         this.style.background = '';
                     }
                 });
             });
+
+            function getCsrfToken() {
+                const cookieName = 'csrftoken';
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    cookie = cookie.trim();
+                    if (cookie.startsWith(cookieName + '=')) {
+                        return cookie.substring(cookieName.length + 1);
+                    }
+                }
+                return '';
+            }
         </script>
-        
+
         <!-- Material Icons Fallback Script -->
         <script>
             // Check if Material Icons are loading properly
@@ -457,11 +898,11 @@
                 // Wait for fonts to load
                 setTimeout(function() {
                     const materialIcons = document.querySelectorAll('.material-icons');
-                    
+
                     // Icon mapping for fallbacks
                     const iconMap = {
                         'dashboard': '📊',
-                        'person': '👤', 
+                        'person': '👤',
                         'lock': '🔒',
                         'person_add': '➕',
                         'group': '👥',
@@ -485,7 +926,7 @@
                         'arrow_back': '←',
                         'arrow_forward': '→'
                     };
-                    
+
                     materialIcons.forEach(function(icon) {
                         const iconName = icon.textContent.trim();
                         // If the icon is showing text instead of symbol, it's not loading
@@ -498,7 +939,7 @@
                             document.body.appendChild(span);
                             const width = span.offsetWidth;
                             document.body.removeChild(span);
-                            
+
                             // If width is too large, the font isn't loading (text is showing)
                             if (width > 30) {
                                 icon.innerHTML = iconMap[iconName];
@@ -510,7 +951,7 @@
                 }, 1000); // Wait 1 second for fonts to load
             });
         </script>
-        
+
         {% block extra_js %}{% endblock %}
     </body>
 </html>

@@ -1,0 +1,477 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Send Bulk Notification{% endblock title %}
+
+{% block css %}
+<style>
+.form-section {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.recipient-selection {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    background-color: white;
+}
+
+.recipient-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    margin: 2px 0;
+    border: 1px solid #e9ecef;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+.recipient-item:hover {
+    background-color: #e9ecef;
+    border-color: #007bff;
+}
+
+.recipient-item.selected {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.recipient-checkbox {
+    margin-right: 12px;
+    transform: scale(1.2);
+}
+
+.recipient-info {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.recipient-name {
+    font-weight: 500;
+}
+
+.recipient-type {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.recipient-item.selected .recipient-type {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.select-all {
+    font-weight: 600;
+    color: #007bff;
+    cursor: pointer;
+    margin-bottom: 10px;
+    display: inline-block;
+}
+
+.select-all:hover {
+    text-decoration: underline;
+}
+
+.selection-summary {
+    background-color: #e7f3ff;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    padding: 12px;
+    margin-top: 10px;
+}
+
+.preview-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.char-counter {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.notification-filter {
+    margin-bottom: 20px;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    background-color: white;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+    background-color: #f8f9fa;
+}
+
+.filter-btn.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+</style>
+{% endblock css %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="mdi mdi-bullhorn"></i> Send Bulk Notification</h2>
+                    <p class="text-muted">Send notifications to multiple users at once</p>
+                </div>
+                <div>
+                    <a href="{% url 'notification_list' %}" class="btn btn-secondary">
+                        <i class="mdi mdi-arrow-left"></i> Back to Notifications
+                    </a>
+                    <a href="{% url 'send_notification' %}" class="btn btn-outline-primary ml-2">
+                        <i class="mdi mdi-send-outline"></i> Send Single
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Form -->
+    <form method="post" id="bulk-notification-form">
+        {% csrf_token %}
+
+        <div class="row">
+            <!-- Recipient Selection -->
+            <div class="col-md-8">
+                <div class="form-section">
+                    <h5 class="mb-3"><i class="mdi mdi-account-multiple"></i> Select Recipients</h5>
+
+                    <!-- Filters -->
+                    <div class="notification-filter">
+                        <label class="form-label"><strong>Filter by User Type:</strong></label>
+                        <div class="filter-buttons">
+                            <button type="button" class="filter-btn active" data-filter="all">All Users</button>
+                            <button type="button" class="filter-btn" data-filter="1">Admins</button>
+                            <button type="button" class="filter-btn" data-filter="2">Employee</button>
+                            <button type="button" class="filter-btn" data-filter="3">Department Heads</button>
+                            <button type="button" class="filter-btn" data-filter="4">HR</button>
+                        </div>
+                    </div>
+
+                    <!-- Select All -->
+                    <div class="select-all" id="select-all-btn">
+                        <i class="mdi mdi-checkbox-multiple-marked"></i> Select All Visible
+                    </div>
+
+                    <!-- Recipients List -->
+                    <div class="recipient-selection">
+                        {% for user_obj in form.fields.recipients.queryset %}
+                        <div class="recipient-item" data-user-type="{{ user_obj.user_type }}">
+                            <input type="checkbox" class="recipient-checkbox form-check-input" name="recipients" value="{{ user_obj.pk }}" id="user-{{ user_obj.pk }}">
+                            <label for="user-{{ user_obj.pk }}" class="recipient-info flex-fill mb-0" style="cursor: pointer;">
+                                <div>
+                                    <div class="recipient-name">{{ user_obj.get_full_name|default:user_obj.username }}</div>
+                                    <div class="recipient-type">{{ user_obj.email }}</div>
+                                </div>
+                                <div class="recipient-type">
+                                    {% if user_obj.user_type == '1' %}Admin{% endif %}
+                                    {% if user_obj.user_type == '2' %}Staff{% endif %}
+                                    {% if user_obj.user_type == '3' %}Department Head{% endif %}
+                                    {% if user_obj.user_type == '4' %}HR{% endif %}
+                                </div>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Selection Summary -->
+                    <div class="selection-summary" id="selection-summary" style="display: none;">
+                        <i class="mdi mdi-information"></i>
+                        <span id="selection-count">0</span> recipients selected
+                    </div>
+
+                    {% if form.recipients.errors %}
+                        <div class="text-danger mt-2">
+                            {% for error in form.recipients.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Notification Details -->
+            <div class="col-md-4">
+                <div class="form-section">
+                    <h5 class="mb-3"><i class="mdi mdi-bell-outline"></i> Notification Details</h5>
+
+                    <div class="mb-3">
+                        <label for="{{ form.notification_type.id_for_label }}" class="form-label">{{ form.notification_type.label }} <span class="text-danger">*</span></label>
+                        <select id="notification-type-select" name="notification_type" class="form-select" required>
+                            {% for value, display in form.fields.notification_type.choices %}
+                                <option value="{{ value }}" {% if form.notification_type.value == value %}selected{% endif %}>
+                                    {{ display }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.notification_type.errors %}
+                            <div class="text-danger">
+                                {% for error in form.notification_type.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }} <span class="text-danger">*</span></label>
+                        {{ form.title }}
+                        <div class="char-counter" id="title-counter">0 / 255 characters</div>
+                        {% if form.title.errors %}
+                            <div class="text-danger">
+                                {% for error in form.title.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="{{ form.message.id_for_label }}" class="form-label">{{ form.message.label }} <span class="text-danger">*</span></label>
+                        {{ form.message }}
+                        <div class="char-counter" id="message-counter">0 / 1000 characters</div>
+                        {% if form.message.errors %}
+                            <div class="text-danger">
+                                {% for error in form.message.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'notification_list' %}" class="btn btn-secondary">
+                            <i class="mdi mdi-cancel"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success" id="send-btn">
+                            <i class="mdi mdi-bullhorn"></i> Send to Selected
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preview Section -->
+                <div class="preview-section" id="preview-section" style="display: none;">
+                    <h6><i class="mdi mdi-eye"></i> Preview</h6>
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="mdi mdi-bell" style="font-size: 1.2rem;"></i>
+                                <small class="text-muted ms-2" id="preview-timestamp">Will be sent now</small>
+                            </div>
+                            <h6 class="card-title" id="preview-title">Notification Title</h6>
+                            <p class="card-text" id="preview-message">Your message will appear here...</p>
+                            <small class="text-muted">From: {{ user.get_full_name|default:user.username }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Send Confirmation Modal -->
+    <div class="modal fade" id="confirm-send-modal" tabindex="-1" aria-labelledby="confirmSendModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmSendModalLabel"><i class="mdi mdi-alert-circle"></i> Confirm Bulk Send</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to send this notification to <strong id="confirm-count">0</strong> recipients?</p>
+                    <div class="alert alert-info">
+                        <strong>Title:</strong> <span id="confirm-title"></span><br>
+                        <strong>Type:</strong> <span id="confirm-type"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="confirm-send-btn">Send Notification</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const titleInput = document.getElementById('id_title');
+    const messageInput = document.getElementById('id_message');
+    const notificationTypeSelect = document.getElementById('id_notification_type');
+    const recipientCheckboxes = document.querySelectorAll('.recipient-checkbox');
+    const selectAllBtn = document.getElementById('select-all-btn');
+    const selectionSummary = document.getElementById('selection-summary');
+    const selectionCount = document.getElementById('selection-count');
+    const sendBtn = document.getElementById('send-btn');
+    const form = document.getElementById('bulk-notification-form');
+
+    // Filter buttons
+    const filterButtons = document.querySelectorAll('.filter-btn');
+
+    // Character counters
+    function updateCounters() {
+        const titleLength = titleInput.value.length;
+        const messageLength = messageInput.value.length;
+
+        document.getElementById('title-counter').textContent = `${titleLength} / 255 characters`;
+        document.getElementById('title-counter').style.color = titleLength > 240 ? '#dc3545' : '#6c757d';
+
+        document.getElementById('message-counter').textContent = `${messageLength} / 1000 characters`;
+        document.getElementById('message-counter').style.color = messageLength > 950 ? '#dc3545' : '#6c757d';
+    }
+
+    // Update preview
+    function updatePreview() {
+        const title = titleInput.value.trim() || 'Notification Title';
+        const message = messageInput.value.trim() || 'Your message will appear here...';
+        const previewSection = document.getElementById('preview-section');
+        const previewTitle = document.getElementById('preview-title');
+        const previewMessage = document.getElementById('preview-message');
+
+        previewTitle.textContent = title;
+        previewMessage.textContent = message;
+
+        const hasContent = titleInput.value.trim() || messageInput.value.trim();
+        previewSection.style.display = hasContent ? 'block' : 'none';
+    }
+
+    // Update recipient count
+    function updateRecipientCount() {
+        const checkedCount = document.querySelectorAll('.recipient-checkbox:checked').length;
+        selectionCount.textContent = checkedCount;
+
+        if (checkedCount > 0) {
+            selectionSummary.style.display = 'block';
+            sendBtn.disabled = false;
+        } else {
+            selectionSummary.style.display = 'none';
+            sendBtn.disabled = true;
+        }
+    }
+
+    // Select all visible recipients
+    selectAllBtn.addEventListener('click', function() {
+        const visibleRecipients = document.querySelectorAll('.recipient-item:not([style*="display: none"]) .recipient-checkbox:not(:checked)');
+        visibleRecipients.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+        updateRecipientCount();
+    });
+
+    // Filter recipients
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            // Add active class to clicked button
+            this.classList.add('active');
+
+            const filter = this.dataset.filter;
+            const recipientItems = document.querySelectorAll('.recipient-item');
+
+            recipientItems.forEach(item => {
+                if (filter === 'all' || item.dataset.userType === filter) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Recipient checkbox change
+    recipientCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const recipientItem = this.closest('.recipient-item');
+            if (this.checked) {
+                recipientItem.classList.add('selected');
+            } else {
+                recipientItem.classList.remove('selected');
+            }
+            updateRecipientCount();
+        });
+    });
+
+    // Event listeners for preview
+    titleInput.addEventListener('input', function() {
+        updateCounters();
+        updatePreview();
+    });
+
+    messageInput.addEventListener('input', function() {
+        updateCounters();
+        updatePreview();
+    });
+
+    notificationTypeSelect.addEventListener('change', updatePreview);
+
+    // Form submission with confirmation
+    sendBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+
+        const checkedCount = document.querySelectorAll('.recipient-checkbox:checked').length;
+
+        if (checkedCount === 0) {
+            alert('Please select at least one recipient.');
+            return;
+        }
+
+        if (!titleInput.value.trim() || !messageInput.value.trim()) {
+            alert('Please fill in both title and message.');
+            return;
+        }
+
+        // Show confirmation modal
+        document.getElementById('confirm-count').textContent = checkedCount;
+        document.getElementById('confirm-title').textContent = titleInput.value.trim();
+        document.getElementById('confirm-type').textContent = notificationTypeSelect.options[notificationTypeSelect.selectedIndex].text;
+
+        const modal = new bootstrap.Modal(document.getElementById('confirm-send-modal'));
+        modal.show();
+    });
+
+    // Confirm send button
+    document.getElementById('confirm-send-btn').addEventListener('click', function() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('confirm-send-modal'));
+        modal.hide();
+
+        // Show loading state
+        const originalText = sendBtn.innerHTML;
+        sendBtn.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i> Sending...';
+        sendBtn.disabled = true;
+

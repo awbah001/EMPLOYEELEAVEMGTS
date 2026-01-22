@@ -3,17 +3,17 @@ Utility functions for leave management
 """
 from datetime import date, timedelta
 from django.db.models import Q
-from slmsapp.models import LeaveBalance, Staff_Leave, PublicHoliday
+from slmsapp.models import LeaveBalance, Employee_Leave, PublicHoliday
 
 
-def calculate_working_days(from_date, to_date, staff=None):
+def calculate_working_days(from_date, to_date, employee=None):
     """
     Calculate working days between two dates, excluding weekends and public holidays
     
     Args:
         from_date: Start date
         to_date: End date
-        staff: Staff object (optional, for department-specific holidays)
+        employee: Employee object (optional, for department-specific holidays)
     
     Returns:
         int: Number of working days
@@ -47,7 +47,7 @@ def update_leave_balance_on_approval(leave):
     Update leave balance when leave is approved
     
     Args:
-        leave: Staff_Leave instance
+        leave: Employee_Leave instance
     
     Returns:
         bool: True if balance was updated, False otherwise
@@ -56,7 +56,7 @@ def update_leave_balance_on_approval(leave):
         return False
     
     # Calculate working days
-    working_days = calculate_working_days(leave.from_date, leave.to_date, leave.staff_id)
+    working_days = calculate_working_days(leave.from_date, leave.to_date, leave.employee_id)
     
     if working_days <= 0:
         return False
@@ -64,7 +64,7 @@ def update_leave_balance_on_approval(leave):
     # Get or create leave balance for current year
     current_year = date.today().year
     leave_balance, created = LeaveBalance.objects.get_or_create(
-        staff=leave.staff_id,
+        employee=leave.employee_id,
         leave_type=leave.leave_type,
         year=current_year,
         defaults={
@@ -87,7 +87,7 @@ def revert_leave_balance_on_rejection(leave):
     Revert leave balance when leave is rejected (if it was previously approved)
     
     Args:
-        leave: Staff_Leave instance
+        leave: Employee_Leave instance
     
     Returns:
         bool: True if balance was reverted, False otherwise
@@ -100,7 +100,7 @@ def revert_leave_balance_on_rejection(leave):
         return False
     
     # Calculate working days
-    working_days = calculate_working_days(leave.from_date, leave.to_date, leave.staff_id)
+    working_days = calculate_working_days(leave.from_date, leave.to_date, leave.employee_id)
     
     if working_days <= 0:
         return False
@@ -109,7 +109,7 @@ def revert_leave_balance_on_rejection(leave):
     current_year = date.today().year
     try:
         leave_balance = LeaveBalance.objects.get(
-            staff=leave.staff_id,
+            employee=leave.employee_id,
             leave_type=leave.leave_type,
             year=current_year
         )
@@ -125,12 +125,12 @@ def revert_leave_balance_on_rejection(leave):
     return False
 
 
-def check_overlapping_leave(staff, from_date, to_date, exclude_leave_id=None):
+def check_overlapping_leave(employee, from_date, to_date, exclude_leave_id=None):
     """
     Check if there are overlapping leave requests
     
     Args:
-        staff: Staff instance
+        employee: Employee instance
         from_date: Start date
         to_date: End date
         exclude_leave_id: Leave ID to exclude from check (for editing)
@@ -138,8 +138,8 @@ def check_overlapping_leave(staff, from_date, to_date, exclude_leave_id=None):
     Returns:
         QuerySet: Overlapping leaves
     """
-    overlapping = Staff_Leave.objects.filter(
-        staff_id=staff,
+    overlapping = Employee_Leave.objects.filter(
+        employee_id=employee,
         status__in=[0, 1],  # Pending or Approved
     ).filter(
         Q(from_date__lte=to_date) & Q(to_date__gte=from_date)

@@ -3,11 +3,11 @@ from slmsapp.EmailBackEnd import EmailBackEnd
 from django.contrib.auth import logout, login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from slmsapp.models import CustomUser, Staff, Staff_Leave, LeaveType, LeaveBalance, PublicHoliday, CalendarEvent
+from slmsapp.models import CustomUser, Employee, Employee_Leave, LeaveType, LeaveBalance, PublicHoliday, CalendarEvent
 from django.db.models import Q
 from datetime import date, datetime, timedelta
 from calendar import monthrange
-from .decorators import staff_required
+from .decorators import employee_required
 from .leave_utils import calculate_working_days, check_overlapping_leave
 import logging
 
@@ -15,15 +15,15 @@ logger = logging.getLogger(__name__)
 
 
 @login_required(login_url='/')
-@staff_required
+@employee_required
 def HOME(request):
-    """Staff Dashboard with leave history and calendar"""
+    """Employee Dashboard with leave history and calendar"""
     try:
-        staff = Staff.objects.get(admin=request.user.id)
-        staff_leave_history = Staff_Leave.objects.filter(staff_id=staff.id).order_by('-created_at')[:5]
+        employee = Employee.objects.get(admin=request.user.id)
+        employee_leave_history = Employee_Leave.objects.filter(employee_id=employee.id).order_by('-created_at')[:5]
 
         # Counts for quick stats on dashboard
-        all_leaves = Staff_Leave.objects.filter(staff_id=staff.id)
+        all_leaves = Employee_Leave.objects.filter(employee_id=employee.id)
         total_applications = all_leaves.count()
         pending_count = all_leaves.filter(status=0).count()
         approved_count = all_leaves.filter(status=1).count()
@@ -32,13 +32,13 @@ def HOME(request):
         # Get leave balances
         current_year = date.today().year
         leave_balances = LeaveBalance.objects.filter(
-            staff=staff,
+            employee=employee,
             year=current_year
         )
         
         context = {
-            'staff': staff,
-            'staff_leave_history': staff_leave_history,
+            'employee': employee,
+            'employee_leave_history': employee_leave_history,
             'leave_balances': leave_balances,
             'total_applications': total_applications,
             'pending_count': pending_count,
@@ -46,38 +46,49 @@ def HOME(request):
             'rejected_count': rejected_count,
         }
         return render(request, 'staff/home.html', context)
-    except Staff.DoesNotExist:
-        messages.error(request, 'Staff profile not found.')
+    except Employee.DoesNotExist:
+        messages.error(request, 'Employee profile not found.')
         return redirect('login')
 
 
 @login_required(login_url='/')
-@staff_required
+@employee_required
 def STAFF_APPLY_LEAVE(request):
     """Apply for leave form"""
     try:
-        staff = Staff.objects.get(admin=request.user.id)
+        employee = Employee.objects.get(admin=request.user.id)
         leave_types = LeaveType.objects.filter(is_active=True)
         
         # Get leave balances for current year
         current_year = date.today().year
         leave_balances = LeaveBalance.objects.filter(
-            staff=staff,
+            employee=employee,
             year=current_year
         )
+        
+        # Check if user is currently on leave (has approved leave that includes today)
+        today = date.today()
+        current_leave = Employee_Leave.objects.filter(
+            employee_id=employee,
+            status=1,  # Approved
+            from_date__lte=today,
+            to_date__gte=today
+        ).first()
         
         context = {
             'leave_types': leave_types,
             'leave_balances': leave_balances,
+            'current_leave': current_leave,
+            'is_on_leave': current_leave is not None,
         }
         return render(request, 'staff/apply_leave.html', context)
-    except Staff.DoesNotExist:
-        messages.error(request, 'Staff profile not found.')
+    except Employee.DoesNotExist:
+        messages.error(request, 'Employee profile not found.')
         return redirect('login')
 
 
 @login_required(login_url='/')
-@staff_required
+@employee_required
 def STAFF_APPLY_LEAVE_SAVE(request):
     """Save leave application with validation"""
     if request.method == "POST":
@@ -86,7 +97,21 @@ def STAFF_APPLY_LEAVE_SAVE(request):
             from django.db.models import Q
             from slmsapp.models import LeaveBalance, PublicHoliday
             
-            staff = Staff.objects.get(admin=request.user.id)
+            employee = Employee.objects.get(admin=request.user.id)
+            
+            # Check if user is currently on leave (has approved leave that includes today)
+            today = date.today()
+            current_leave = Employee_Leave.objects.filter(
+                employee_id=employee,
+                status=1,  # Approved
+                from_date__lte=today,
+                to_date__gte=today
+            ).first()
+            
+            if current_leave:
+                messages.error(request, f'You cannot apply for leave while you are currently on leave. Your current leave period is from {current_leave.from_date.strftime("%B %d, %Y")} to {current_leave.to_date.strftime("%B %d, %Y")}. Please wait until your current leave period ends.')
+                return redirect('staff_apply_leave')
+            
             leave_type_id = request.POST.get('leave_type')
             from_date_str = request.POST.get('from_date')
             to_date_str = request.POST.get('to_date')
@@ -138,7 +163,7 @@ def STAFF_APPLY_LEAVE_SAVE(request):
                 current_year = date.today().year
                 try:
                     leave_balance = LeaveBalance.objects.get(
-                        staff=staff,
+                        employee=employee,
                         leave_type=leave_type,
                         year=current_year
                     )
@@ -157,7 +182,7 @@ def STAFF_APPLY_LEAVE_SAVE(request):
                     )
             
             # Check for overlapping leave requests
-            overlapping_leave = check_overlapping_leave(staff, from_date, to_date)
+            overlapping_leave = check_overlapping_leave(employee, from_date, to_date)
             
             if overlapping_leave.exists():
                 messages.error(
@@ -181,8 +206,8 @@ def STAFF_APPLY_LEAVE_SAVE(request):
                     return redirect('staff_apply_leave')
 
             # Create leave application
-            leave = Staff_Leave(
-                staff_id=staff,
+            leave = Employee_Leave(
+                employee_id=employee,
                 leave_type=leave_type,
                 leave_type_name=leave_type_name,
                 from_date=from_date,
@@ -193,9 +218,9 @@ def STAFF_APPLY_LEAVE_SAVE(request):
             leave.save()
             messages.success(request, f'Leave application submitted successfully for {working_days} working day(s).')
             return redirect('staff_apply_leave')
-        except Staff.DoesNotExist:
-            messages.error(request, 'Staff profile not found. Please contact administrator.')
-            logger.error(f'Staff profile not found for user {request.user.id}')
+        except Employee.DoesNotExist:
+            messages.error(request, 'Employee profile not found. Please contact administrator.')
+            logger.error(f'Employee profile not found for user {request.user.id}')
             return redirect('login')
         except ValueError as e:
             messages.error(request, f'Invalid input: {str(e)}. Please check your dates and try again.')
@@ -210,41 +235,52 @@ def STAFF_APPLY_LEAVE_SAVE(request):
 
 
 @login_required(login_url='/')
-@staff_required
+@employee_required
 def STAFF_LEAVE_VIEW(request):
     """View full leave history"""
     try:
-        staff = Staff.objects.get(admin=request.user.id)
-        staff_leave_history = Staff_Leave.objects.filter(staff_id=staff.id).order_by('-created_at')
+        employee = Employee.objects.get(admin=request.user.id)
+        employee_leave_history = Employee_Leave.objects.filter(employee_id=employee.id).order_by('-created_at')
         
         # Filter by status if provided
         status_filter = request.GET.get('status', '')
         if status_filter:
-            staff_leave_history = staff_leave_history.filter(status=int(status_filter))
+            employee_leave_history = employee_leave_history.filter(status=int(status_filter))
+        
+        # Calculate status counts for all leaves (before filtering)
+        all_leaves = Employee_Leave.objects.filter(employee_id=employee.id)
+        total_count = all_leaves.count()
+        pending_count = all_leaves.filter(status=0).count()
+        approved_count = all_leaves.filter(status=1).count()
+        rejected_count = all_leaves.filter(status=2).count()
         
         context = {
-            'staff_leave_history': staff_leave_history,
+            'employee_leave_history': employee_leave_history,
             'status_filter': status_filter,
+            'total_count': total_count,
+            'pending_count': pending_count,
+            'approved_count': approved_count,
+            'rejected_count': rejected_count,
         }
         return render(request, 'staff/leave_history.html', context)
-    except Staff.DoesNotExist:
-        messages.error(request, 'Staff profile not found.')
+    except Employee.DoesNotExist:
+        messages.error(request, 'Employee profile not found.')
         return redirect('login')
 
 
 @login_required(login_url='/')
-@staff_required
+@employee_required
 def VIEW_LEAVE_BALANCE(request):
     """View leave balance"""
     try:
-        staff = Staff.objects.get(admin=request.user.id)
+        employee = Employee.objects.get(admin=request.user.id)
         
         # Get current year or from request
         year = int(request.GET.get('year', date.today().year))
         
         # Get leave balances for the year
         leave_balances = LeaveBalance.objects.filter(
-            staff=staff,
+            employee=employee,
             year=year
         ).order_by('leave_type__name')
         
@@ -254,7 +290,7 @@ def VIEW_LEAVE_BALANCE(request):
         total_remaining = sum(balance.days_remaining for balance in leave_balances)
         
         context = {
-            'staff': staff,
+            'employee': employee,
             'leave_balances': leave_balances,
             'current_year': year,
             'total_entitled': total_entitled,
@@ -262,49 +298,49 @@ def VIEW_LEAVE_BALANCE(request):
             'total_remaining': total_remaining,
         }
         return render(request, 'staff/leave_balance.html', context)
-    except Staff.DoesNotExist:
-        messages.error(request, 'Staff profile not found.')
+    except Employee.DoesNotExist:
+        messages.error(request, 'Employee profile not found.')
         return redirect('login')
 
 
 @login_required(login_url='/')
-@staff_required
+@employee_required
 def TRACK_LEAVE_STATUS(request, leave_id):
     """Track specific leave application status"""
     try:
-        staff = Staff.objects.get(admin=request.user.id)
-        leave = Staff_Leave.objects.get(id=leave_id, staff_id=staff)
+        employee = Employee.objects.get(admin=request.user.id)
+        leave = Employee_Leave.objects.get(id=leave_id, employee_id=employee)
         
         context = {
             'leave': leave,
         }
         return render(request, 'staff/track_leave.html', context)
-    except Staff.DoesNotExist:
-        messages.error(request, 'Staff profile not found.')
+    except Employee.DoesNotExist:
+        messages.error(request, 'Employee profile not found.')
         return redirect('login')
-    except Staff_Leave.DoesNotExist:
+    except Employee_Leave.DoesNotExist:
         messages.error(request, 'Leave application not found.')
         return redirect('staff_leave_view')
 
 
 @login_required(login_url='/')
-@staff_required
+@employee_required
 def STAFF_CALENDAR(request):
     """View personal leave calendar"""
     # region agent log
     try:
         import json, time, os
-        debugdir = os.path.dirname(r'c:\Users\DEVNET\Desktop\Staff-Leave-MS-Django-Python\.cursor\debug.log')
+        debugdir = os.path.dirname(r'c:\Users\DEVNET\Desktop\Employee-Leave-MS-Django-Python\.cursor\debug.log')
         loginfo = {
             "sessionId": "debug-session",
             "runId": "run1",
             "hypothesisId": "H2",
             "location": "staffviews.py:292",
             "message": "FUNC_ENTRY and FS status",
-            "data": {'cwd': os.getcwd(), 'debug_log_dir_exists': os.path.exists(debugdir), 'debug_log_path': r'c:\Users\DEVNET\Desktop\Staff-Leave-MS-Django-Python\\.cursor\\debug.log', 'debug_log_parent': debugdir},
+            "data": {'cwd': os.getcwd(), 'debug_log_dir_exists': os.path.exists(debugdir), 'debug_log_path': r'c:\Users\DEVNET\Desktop\Employee-Leave-MS-Django-Python\\.cursor\\debug.log', 'debug_log_parent': debugdir},
             "timestamp": int(time.time()*1000)
         }
-        with open(r'c:\Users\DEVNET\Desktop\Staff-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
+        with open(r'c:\Users\DEVNET\Desktop\Employee-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
             f.write(json.dumps(loginfo) + "\n")
     except Exception as log_exc:
         pass
@@ -313,7 +349,7 @@ def STAFF_CALENDAR(request):
         # region agent log
         try:
             import json, time
-            with open(r'c:\Users\DEVNET\Desktop\Staff-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
+            with open(r'c:\Users\DEVNET\Desktop\Employee-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
                 f.write(json.dumps({
                     "sessionId": "debug-session",
                     "runId": "run1",
@@ -327,27 +363,27 @@ def STAFF_CALENDAR(request):
             pass
         # endregion
 
-        staff = Staff.objects.get(admin=request.user.id)
+        employee = Employee.objects.get(admin=request.user.id)
         # region agent log
         try:
             import json, time
-            with open(r'c:\Users\DEVNET\Desktop\Staff-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
+            with open(r'c:\Users\DEVNET\Desktop\Employee-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
                 f.write(json.dumps({
                     "sessionId": "debug-session",
                     "runId": "run1",
                     "hypothesisId": "H2",
                     "location": "staffviews.py:295",
-                    "message": "Staff instance fetched",
-                    "data": {"staff_id": getattr(staff, 'id', None)},
+                    "message": "Employee instance fetched",
+                    "data": {"employee_id": getattr(employee, 'id', None)},
                     "timestamp": int(time.time()*1000)
                 }) + "\n")
         except Exception as log_exc:
             pass
         # endregion
         
-        # Get all leaves for this staff member
-        all_leaves = Staff_Leave.objects.filter(
-            staff_id=staff
+        # Get all leaves for this employee member
+        all_leaves = Employee_Leave.objects.filter(
+            employee_id=employee
         ).order_by('from_date')
         
         # Get current month/year or from request
@@ -371,7 +407,7 @@ def STAFF_CALENDAR(request):
         # region agent log
         try:
             import json, time
-            with open(r'c:\Users\DEVNET\Desktop\Staff-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
+            with open(r'c:\Users\DEVNET\Desktop\Employee-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
                 f.write(json.dumps({
                     "sessionId": "debug-session",
                     "runId": "run1",
@@ -393,7 +429,7 @@ def STAFF_CALENDAR(request):
             # region agent log
             try:
                 import json, time
-                with open(r'c:\Users\DEVNET\Desktop\Staff-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
+                with open(r'c:\Users\DEVNET\Desktop\Employee-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
                     f.write(json.dumps({
                         "sessionId": "debug-session",
                         "runId": "run1",
@@ -410,7 +446,7 @@ def STAFF_CALENDAR(request):
             # region agent log
             try:
                 import json, time
-                with open(r'c:\Users\DEVNET\Desktop\Staff-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
+                with open(r'c:\Users\DEVNET\Desktop\Employee-Leave-MS-Django-Python\.cursor\debug.log', 'a') as f:
                     f.write(json.dumps({
                         "sessionId": "debug-session",
                         "runId": "run1",
@@ -478,7 +514,7 @@ def STAFF_CALENDAR(request):
             )
         
         context = {
-            'staff': staff,
+            'employee': employee,
             'all_leaves': month_leaves,
             'public_holidays': public_holidays,
             'calendar_events': calendar_events,
@@ -489,6 +525,6 @@ def STAFF_CALENDAR(request):
             'calendar_days': calendar_days,
         }
         return render(request, 'staff/calendar.html', context)
-    except Staff.DoesNotExist:
-        messages.error(request, 'Staff profile not found.')
+    except Employee.DoesNotExist:
+        messages.error(request, 'Employee profile not found.')
         return redirect('staff_home')

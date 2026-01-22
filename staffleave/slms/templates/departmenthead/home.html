@@ -19,19 +19,20 @@
 
 <!-- Statistics Cards -->
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-    <!-- Department Staff Card -->
-    <div class="modern-card" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: var(--white); position: relative; overflow: hidden;">
+    <!-- Department Employee Card -->
+    <div class="modern-card" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: var(--white); position: relative; overflow: hidden; cursor: pointer; transition: all 0.3s ease;" onclick="showEmployeeModal()" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 20px 40px rgba(59, 130, 246, 0.3)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='';">
         <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
         <div style="position: relative; z-index: 1;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
                 <div>
-                    <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Department Staff</div>
+                    <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Department Employee</div>
                     <div style="font-size: 2.5rem; font-weight: 700; line-height: 1;">{{department_staff_count}}</div>
                 </div>
                 <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                     <i class="material-icons" style="font-size: 1.5rem;">group</i>
                 </div>
             </div>
+            <div style="font-size: 0.85rem; opacity: 0.9;">Click to view all employees</div>
         </div>
     </div>
     
@@ -147,11 +148,12 @@
     </div>
     
     {% if pending_leaves %}
-        <div class="table-container" style="overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--medium-gray);">
+        <div class="table-container" style="overflow-x: auto; overflow-y: auto; border-radius: var(--radius-lg); border: 1px solid var(--medium-gray);">
             <table class="modern-table">
                 <thead>
                     <tr>
-                        <th>Staff Name</th>
+                        <th>Photo</th>
+                        <th>Employee Name</th>
                         <th>Leave Type</th>
                         <th>From Date</th>
                         <th>To Date</th>
@@ -161,6 +163,17 @@
                 <tbody>
                     {% for leave in pending_leaves %}
                     <tr>
+                        <td>
+                            <div style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden; border: 2px solid var(--medium-gray);">
+                                {% if leave.staff_id.admin.profile_pic %}
+                                    <img src="{{ leave.staff_id.admin.profile_pic.url }}" alt="{{ leave.staff_id.admin.get_full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                {% else %}
+                                    <div style="width: 100%; height: 100%; background: var(--light-gray); display: flex; align-items: center; justify-content: center;">
+                                        <i class="material-icons" style="color: var(--text-secondary);">person</i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </td>
                         <td>{{ leave.staff_id.admin.get_full_name }}</td>
                         <td>{{ leave.leave_type_name|default:leave.leave_type.name }}</td>
                         <td>{{ leave.from_date|date:"M d, Y" }}</td>
@@ -189,6 +202,40 @@
             <p style="color: var(--text-secondary);">All leave applications have been processed.</p>
         </div>
     {% endif %}
+</div>
+
+<!-- Employee Modal -->
+<div id="employeeModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="modern-card" style="width: 90%; max-width: 900px; max-height: 80vh; overflow-y: auto; position: relative;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; position: sticky; top: 0; background: white; padding-bottom: 1rem;">
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                <i class="material-icons" style="color: var(--primary-blue);">people</i>
+                Department Employees - {{ department.name }}
+            </h3>
+            <button onclick="closeEmployeeModal()" style="background: none; border: none; cursor: pointer; font-size: 1.5rem; color: var(--text-secondary);">
+                <i class="material-icons">close</i>
+            </button>
+        </div>
+        
+        <!-- Search and Filter -->
+        <div style="margin-bottom: 1.5rem;">
+            <input type="text" id="employeeSearch" placeholder="Search by name, email, or employee ID..." style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--medium-gray); border-radius: var(--radius-lg); font-size: 0.95rem;" onkeyup="filterEmployees()">
+        </div>
+        
+        <!-- Employee List -->
+        <div id="employeeList" style="display: grid; gap: 1rem;">
+            <!-- Employees will be populated here -->
+        </div>
+        
+        <!-- Empty State -->
+        <div id="emptyState" style="text-align: center; padding: 2rem; display: none;">
+            <div style="width: 80px; height: 80px; background: var(--light-gray); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                <i class="material-icons" style="font-size: 2rem; color: var(--text-secondary);">people</i>
+            </div>
+            <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">No Employees Found</h4>
+            <p style="color: var(--text-secondary);">No employees match your search criteria.</p>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -362,6 +409,190 @@
         padding: 5px 8px;
     }
 }
+
+/* Employee Modal Styles */
+.employee-card {
+    padding: 1rem;
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--radius-lg);
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.employee-card:hover {
+    border-color: var(--primary-blue);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    background: rgba(59, 130, 246, 0.02);
+}
+
+.employee-photo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--medium-gray);
+    flex-shrink: 0;
+}
+
+.employee-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.employee-photo-placeholder {
+    width: 100%;
+    height: 100%;
+    background: var(--light-gray);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.employee-info {
+    flex: 1;
+}
+
+.employee-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.employee-details {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.employee-details-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.employee-details-item i {
+    font-size: 1rem;
+    color: var(--primary-blue);
+}
+
 </style>
+
+<script>
+// Employee data from backend
+const employees = [
+    {% for employee in department_staff %}
+    {
+        id: {{ employee.id }},
+        name: "{{ employee.admin.get_full_name }}",
+        email: "{{ employee.admin.email }}",
+        employee_id: "{{ employee.employee_id }}",
+        phone: "{{ employee.phone_number|default:'' }}",
+        employee_type: "{{ employee.employee_type }}",
+        photo_url: "{{ employee.admin.profile_pic.url|default:'' }}",
+        date_of_joining: "{{ employee.date_of_joining|date:'M d, Y'|default:'' }}"
+    },
+    {% endfor %}
+];
+
+function showEmployeeModal() {
+    const modal = document.getElementById('employeeModal');
+    const employeeList = document.getElementById('employeeList');
+    
+    modal.style.display = 'flex';
+    
+    if (employees.length > 0) {
+        employeeList.innerHTML = employees.map(emp => `
+            <div class="employee-card">
+                <div class="employee-photo">
+                    ${emp.photo_url 
+                        ? `<img src="${emp.photo_url}" alt="${emp.name}">` 
+                        : `<div class="employee-photo-placeholder">
+                            <i class="material-icons" style="color: var(--text-secondary); font-size: 1.75rem;">person</i>
+                        </div>`
+                    }
+                </div>
+                <div class="employee-info">
+                    <div class="employee-name">${emp.name}</div>
+                    <div class="employee-details">
+                        <div class="employee-details-item">
+                            <i class="material-icons">badge</i>
+                            <span>${emp.employee_id || 'N/A'}</span>
+                        </div>
+                        <div class="employee-details-item">
+                            <i class="material-icons">email</i>
+                            <span>${emp.email}</span>
+                        </div>
+                        ${emp.phone ? `
+                        <div class="employee-details-item">
+                            <i class="material-icons">phone</i>
+                            <span>${emp.phone}</span>
+                        </div>
+                        ` : ''}
+                        <div class="employee-details-item">
+                            <i class="material-icons">work</i>
+                            <span>${emp.employee_type || 'Full-time'}</span>
+                        </div>
+                        ${emp.date_of_joining ? `
+                        <div class="employee-details-item">
+                            <i class="material-icons">calendar_today</i>
+                            <span>Joined: ${emp.date_of_joining}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        document.getElementById('emptyState').style.display = 'none';
+    } else {
+        employeeList.innerHTML = '';
+        document.getElementById('emptyState').style.display = 'block';
+    }
+}
+
+function closeEmployeeModal() {
+    document.getElementById('employeeModal').style.display = 'none';
+}
+
+function filterEmployees() {
+    const searchTerm = document.getElementById('employeeSearch').value.toLowerCase();
+    const employeeList = document.getElementById('employeeList');
+    const cards = employeeList.querySelectorAll('.employee-card');
+    
+    let visibleCount = 0;
+    
+    cards.forEach(card => {
+        const name = card.querySelector('.employee-name').textContent.toLowerCase();
+        const email = card.textContent.toLowerCase();
+        
+        if (name.includes(searchTerm) || email.includes(searchTerm)) {
+            card.style.display = '';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    if (visibleCount === 0) {
+        document.getElementById('emptyState').style.display = 'block';
+    } else {
+        document.getElementById('emptyState').style.display = 'none';
+    }
+}
+
+// Close modal when clicking outside
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('employeeModal');
+    modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            closeEmployeeModal();
+        }
+    });
+});
+</script>
 {% endblock %}
 

@@ -148,10 +148,10 @@
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div class="form-group">
-                    <label for="employee_id">Employee ID</label>
+                    <label for="employee_id">Employee ID <small style="color: #666;">(Auto-generated if left blank)</small></label>
                     <div style="position: relative;">
                         <i class="material-icons input-icon">badge</i>
-                        <input type="text" id="employee_id" name="employee_id" class="form-input" placeholder="Enter employee ID" style="padding-left: 3rem;">
+                        <input type="text" id="employee_id" name="employee_id" class="form-input" placeholder="Leave blank to auto-generate" style="padding-left: 3rem;">
                     </div>
                 </div>
                 
@@ -165,11 +165,11 @@
             </div>
             
             <div class="form-group" style="margin-top: 1rem;">
-                <label for="staff_type">Staff Type</label>
+                <label for="employee_type">Employee Type</label>
                 <div style="position: relative;">
                     <i class="material-icons input-icon">business_center</i>
-                    <select id="staff_type" name="staff_type" class="form-input" style="padding-left: 3rem;">
-                        <option value="">Select Staff Type</option>
+                    <select id="employee_type" name="employee_type" class="form-input" style="padding-left: 3rem;">
+                        <option value="">Select Employee Type</option>
                         <option value="Full-time">Full-time</option>
                         <option value="Part-time">Part-time</option>
                         <option value="Contract">Contract</option>
@@ -191,7 +191,7 @@
                 <div class="form-group">
                     <label for="user_type">User Type <span style="color: #ef4444;">*</span></label>
                     <select id="user_type" name="user_type" class="form-input" required>
-                        <option value="2" selected>Staff</option>
+                        <option value="2" selected>Employee</option>
                         <option value="1">Admin</option>
                         <option value="3">Department Head</option>
                         <option value="4">HR</option>
@@ -199,13 +199,16 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="department_id" id="department-label" style="display: none;">Department <span style="color: #ef4444;">*</span></label>
-                    <select id="department_id" name="department_id" class="form-input" style="display: none;">
-                        <option value="">Select Department</option>
-                        {% for dept in departments %}
-                        <option value="{{ dept.id }}">{{ dept.name }}</option>
-                        {% endfor %}
-                    </select>
+                    <label for="department_id" id="department-label">Department</label>
+                    <div style="position: relative;">
+                        <i class="material-icons input-icon">business</i>
+                        <select id="department_id" name="department_id" class="form-input" style="padding-left: 3rem;">
+                            <option value="">Select Department</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
             </div>
             
@@ -219,17 +222,17 @@
             <div style="margin-top: 0.75rem;">
                 <label style="display:flex; align-items:center; gap:0.5rem;">
                     <input type="checkbox" name="create_staff_profile" id="create_staff_profile" checked />
-                    <span style="color:var(--text-secondary);">Create staff profile with employment information</span>
+                    <span style="color:var(--text-secondary);">Create employee profile with employment information</span>
                 </label>
             </div>
         </div>
         
         <!-- Submit Button -->
         <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
-            <a href="{% url 'view_staff' %}" class="btn-secondary" style="padding: 0.875rem 1.5rem;">
+            <a href="{% url 'view_staff' %}" class="btn-secondary" style="padding: 0.875rem 1.5rem; min-width: 150px; justify-content: center;">
                 Cancel
             </a>
-            <button type="submit" class="btn-primary" style="padding: 0.875rem 1.5rem;">
+            <button type="submit" class="btn-primary" style="padding: 0.875rem 1.5rem; min-width: 150px; justify-content: center;">
                 <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">save</i>
                 Create User
             </button>
@@ -242,20 +245,52 @@ document.addEventListener('DOMContentLoaded', function() {
     const userTypeSelect = document.getElementById('user_type');
     const departmentSelect = document.getElementById('department_id');
     const departmentLabel = document.getElementById('department-label');
+    const departmentFormGroup = departmentSelect.closest('.form-group');
     const employmentInfo = document.getElementById('employment-info');
     
+    // Store all departments that have existing department heads
+    const departmentsWithHeads = new Set();
+    {% for dept_head in departments_with_heads %}
+        departmentsWithHeads.add('{{ dept_head.department_id }}');
+    {% endfor %}
+    
     function toggleDepartmentField() {
-        if (userTypeSelect.value === '3') { // Department Head
-            departmentSelect.style.display = 'block';
+        // Show department field for Employee (type 2) and Department Head (type 3)
+        if (userTypeSelect.value === '2' || userTypeSelect.value === '3') {
+            departmentFormGroup.style.display = 'block';
             departmentLabel.style.display = 'block';
-            departmentSelect.required = true;
+            // Department is required only for Department Head
+            departmentSelect.required = (userTypeSelect.value === '3');
+            // Update label to show required indicator for Department Head
+            if (userTypeSelect.value === '3') {
+                departmentLabel.innerHTML = 'Department <span style="color: #ef4444;">*</span>';
+                // Disable and show as disabled departments that already have heads
+                const options = departmentSelect.querySelectorAll('option');
+                options.forEach(option => {
+                    if (option.value && departmentsWithHeads.has(option.value)) {
+                        option.disabled = true;
+                        if (!option.textContent.includes('(Has Department Head)')) {
+                            option.textContent = option.textContent + ' (Has Department Head)';
+                        }
+                    }
+                });
+            } else {
+                departmentLabel.innerHTML = 'Department';
+                // Re-enable all options for regular employees
+                const options = departmentSelect.querySelectorAll('option');
+                options.forEach(option => {
+                    option.disabled = false;
+                    option.textContent = option.textContent.replace(' (Has Department Head)', '');
+                });
+            }
         } else {
-            departmentSelect.style.display = 'none';
+            departmentFormGroup.style.display = 'none';
             departmentLabel.style.display = 'none';
             departmentSelect.required = false;
+            departmentSelect.value = ''; // Clear selection when hidden
         }
         
-        // Show employment info for Staff (type 2) or if create_staff_profile is checked
+        // Show employment info for Employee (type 2) or if create_staff_profile is checked
         const createStaffCheckbox = document.getElementById('create_staff_profile');
         if (userTypeSelect.value === '2' || (createStaffCheckbox && createStaffCheckbox.checked)) {
             employmentInfo.style.display = 'block';
@@ -266,6 +301,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     userTypeSelect.addEventListener('change', toggleDepartmentField);
     toggleDepartmentField();
+    
+    // Add form submission validation for Department Head creation
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (userTypeSelect.value === '3') {
+                const selectedDept = departmentSelect.value;
+                if (!selectedDept) {
+                    e.preventDefault();
+                    alert('Please select a department for the department head.');
+                    return false;
+                }
+                if (departmentsWithHeads.has(selectedDept)) {
+                    e.preventDefault();
+                    alert('A department head already exists for the selected department. Please choose another department or select a different user role.');
+                    return false;
+                }
+            }
+        });
+    }
     
     // show/hide employment info when checkbox toggled
     const createStaffCheckbox = document.getElementById('create_staff_profile');

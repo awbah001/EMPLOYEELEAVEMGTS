@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Department Calendar - Department Head Dashboard{% endblock %}
+{% block title %}My Leave Calendar - Department Head{% endblock %}
 
 {% block content %}
-<!-- Page Header -->
+<!-- Page Header for Department Head Leave Calendar -->
 <div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
     <div style="display: flex; align-items: center; justify-content: space-between;">
         <div style="display: flex; align-items: center; gap: 1rem;">
@@ -12,8 +12,8 @@
                 <i class="material-icons" style="font-size: 2rem;">calendar_today</i>
             </div>
             <div>
-                <h2 style="margin: 0; font-size: 1.75rem; font-weight: 600;">Department Calendar</h2>
-                <p style="margin: 0.25rem 0 0 0; opacity: 0.9; font-size: 0.875rem;">{{ department.name }} - View approved leaves</p>
+                <h2 style="margin: 0; font-size: 1.75rem; font-weight: 600;">My Leave Calendar</h2>
+                <p style="margin: 0.25rem 0 0 0; opacity: 0.9; font-size: 0.875rem;">View your leave requests and public holidays</p>
             </div>
         </div>
         <a href="{% url 'dh_home' %}" style="color: var(--white); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.1); border-radius: var(--radius-md); transition: background 0.2s ease;">
@@ -23,93 +23,264 @@
     </div>
 </div>
 
-<!-- Month Navigation -->
-<div class="modern-card" style="margin-bottom: 2rem;">
-    <form method="GET" action="{% url 'dh_calendar' %}" style="display: flex; gap: 1rem; align-items: center; justify-content: center;">
-        <div class="form-group" style="display: flex; align-items: center; gap: 1rem;">
-            <label for="month" style="font-weight: 500; color: var(--text-primary);">Month:</label>
-            <select id="month" name="month" class="form-input" style="width: 150px; padding: 0.75rem; border: 2px solid var(--medium-gray); border-radius: var(--radius-md); font-size: 1rem;">
-                <option value="1" {% if current_month == 1 %}selected{% endif %}>January</option>
-                <option value="2" {% if current_month == 2 %}selected{% endif %}>February</option>
-                <option value="3" {% if current_month == 3 %}selected{% endif %}>March</option>
-                <option value="4" {% if current_month == 4 %}selected{% endif %}>April</option>
-                <option value="5" {% if current_month == 5 %}selected{% endif %}>May</option>
-                <option value="6" {% if current_month == 6 %}selected{% endif %}>June</option>
-                <option value="7" {% if current_month == 7 %}selected{% endif %}>July</option>
-                <option value="8" {% if current_month == 8 %}selected{% endif %}>August</option>
-                <option value="9" {% if current_month == 9 %}selected{% endif %}>September</option>
-                <option value="10" {% if current_month == 10 %}selected{% endif %}>October</option>
-                <option value="11" {% if current_month == 11 %}selected{% endif %}>November</option>
-                <option value="12" {% if current_month == 12 %}selected{% endif %}>December</option>
-            </select>
-            
-            <label for="year" style="font-weight: 500; color: var(--text-primary);">Year:</label>
-            <select id="year" name="year" class="form-input" style="width: 120px; padding: 0.75rem; border: 2px solid var(--medium-gray); border-radius: var(--radius-md); font-size: 1rem;">
-                <option value="2023" {% if current_year == 2023 %}selected{% endif %}>2023</option>
-                <option value="2024" {% if current_year == 2024 %}selected{% endif %}>2024</option>
-                <option value="2025" {% if current_year == 2025 %}selected{% endif %}>2025</option>
-                <option value="2026" {% if current_year == 2026 %}selected{% endif %}>2026</option>
-                <option value="2027" {% if current_year == 2027 %}selected{% endif %}>2027</option>
-            </select>
-            
-            <button type="submit" class="btn-primary" style="padding: 0.75rem 1.5rem;">
-                <i class="material-icons" style="font-size: 1rem; margin-right: 0.5rem;">search</i>
-                View
-            </button>
+<div class="modern-card calendar-card">
+    <div class="calendar-header">
+        <div>
+            <div class="calendar-title">{{ month_name }} {{ current_year }}</div>
+            <div class="calendar-subtitle">Tap a highlighted date to see what you applied for.</div>
         </div>
-    </form>
-</div>
+    </div>
 
-<!-- Calendar View -->
-<div class="modern-card">
-    <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
-        <i class="material-icons" style="color: var(--primary-blue);">event</i>
-        Approved Leaves for 
-        {% if current_month == 1 %}January{% elif current_month == 2 %}February{% elif current_month == 3 %}March{% elif current_month == 4 %}April{% elif current_month == 5 %}May{% elif current_month == 6 %}June{% elif current_month == 7 %}July{% elif current_month == 8 %}August{% elif current_month == 9 %}September{% elif current_month == 10 %}October{% elif current_month == 11 %}November{% else %}December{% endif %} {{ current_year }}
-    </h3>
-    
-    {% if approved_leaves %}
-        <div class="table-container" style="overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--medium-gray);">
-            <table class="modern-table" style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr style="background: var(--light-gray);">
-                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">Staff Name</th>
-                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">Leave Type</th>
-                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">From Date</th>
-                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">To Date</th>
-                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">Days</th>
-                        <th style="padding: 1rem; font-weight: 600; color: var(--text-primary); text-align: left;">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for leave in approved_leaves %}
-                    <tr>
-                        <td style="padding: 1rem; font-weight: 600; color: var(--text-primary);">{{ leave.staff_id.admin.get_full_name }}</td>
-                        <td style="padding: 1rem; color: var(--text-secondary);">{{ leave.leave_type_name|default:leave.leave_type.name|default:"N/A" }}</td>
-                        <td style="padding: 1rem; color: var(--text-secondary);">{{ leave.from_date|date:"M d, Y" }}</td>
-                        <td style="padding: 1rem; color: var(--text-secondary);">{{ leave.to_date|date:"M d, Y" }}</td>
-                        <td style="padding: 1rem; color: var(--text-secondary);">{{ leave.number_of_days|default:"N/A" }}</td>
-                        <td style="padding: 1rem;">
-                            <span class="status-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">Approved</span>
-                        </td>
-                    </tr>
+    <div class="calendar-grid calendar-weekdays">
+        <div>Mo</div>
+        <div>Tu</div>
+        <div>We</div>
+        <div>Th</div>
+        <div>Fr</div>
+        <div>Sa</div>
+        <div>Su</div>
+    </div>
+
+    <div class="calendar-grid">
+        {% for _ in leading_blanks %}
+            <div class="day-cell empty"></div>
+        {% endfor %}
+
+        {% for day in calendar_days %}
+            <div class="day-cell {% if day.is_today %}today{% endif %} {% if day.leave %}has-leave status-{{ day.status }}{% endif %} {% if day.holiday %}has-holiday{% endif %} {% if day.events %}has-events{% endif %}">
+                <div class="day-number">{{ day.day }}</div>
+                {% if day.holiday %}
+                    <div class="day-chip holiday-chip" title="{{ day.holiday.name }}">
+                        <i class="material-icons" style="font-size: 0.75rem;">celebration</i>
+                    </div>
+                {% endif %}
+                {% if day.events %}
+                    {% for event in day.events %}
+                        <div class="day-chip event-chip event-{{ event.event_type }}" title="{{ event.title }}">
+                            <i class="material-icons" style="font-size: 0.75rem;">
+                                {% if event.event_type == 'meeting' %}groups{% elif event.event_type == 'training' %}school{% elif event.event_type == 'workshop' %}work{% elif event.event_type == 'announcement' %}campaign{% elif event.event_type == 'deadline' %}schedule{% else %}event{% endif %}
+                            </i>
+                        </div>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
-            <i class="material-icons" style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.3;">calendar_today</i>
-            <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">No approved leaves for this month</p>
-            <p style="font-size: 0.875rem; opacity: 0.7;">There are no approved leave applications for the selected month</p>
+                {% endif %}
+                {% if day.leave %}
+                    <div class="day-chip status-{{ day.status }}" title="{{ day.leave_name }} - {{ day.status_label }}">
+                        {{ day.leave_name }}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="calendar-legend">
+        <span class="legend-item"><span class="legend-dot status-approved"></span>Approved Leave</span>
+        <span class="legend-item"><span class="legend-dot status-pending"></span>Pending Leave</span>
+        <span class="legend-item"><span class="legend-dot status-rejected"></span>Rejected Leave</span>
+        <span class="legend-item"><span class="legend-dot holiday-dot"></span>Holiday</span>
+        <span class="legend-item"><span class="legend-dot event-dot"></span>Event</span>
+        <span class="legend-item"><span class="legend-dot today-dot"></span>Today</span>
+    </div>
+
+    {% if public_holidays or calendar_events %}
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--medium-gray);">
+            {% if public_holidays %}
+                <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="material-icons" style="color: #f59e0b;">celebration</i>
+                    Public Holidays
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    {% for holiday in public_holidays %}
+                        <div style="padding: 1rem; background: rgba(249, 115, 22, 0.05); border: 1px solid rgba(249, 115, 22, 0.1); border-radius: var(--radius-md);">
+                            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">{{ holiday.name }}</div>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">{{ holiday.date|date:"M d, Y" }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            {% if calendar_events %}
+                <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="material-icons" style="color: #3b82f6;">event</i>
+                    Calendar Events
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    {% for event in calendar_events %}
+                        <div style="padding: 1rem; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.1); border-radius: var(--radius-md);">
+                            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">{{ event.title }}</div>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">
+                                <i class="material-icons" style="font-size: 0.875rem; vertical-align: middle;">calendar_today</i>
+                                {{ event.event_date|date:"M d, Y" }}
+                                {% if not event.is_all_day and event.start_time %}
+                                    at {{ event.start_time|time:"g:i A" }}
+                                {% endif %}
+                            </div>
+                            {% if event.location %}
+                                <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                                    <i class="material-icons" style="font-size: 0.875rem; vertical-align: middle;">location_on</i>
+                                    {{ event.location }}
+                                </div>
+                            {% endif %}
+                            {% if event.description %}
+                                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.25rem;">{{ event.description|truncatewords:15 }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
     {% endif %}
 </div>
 
 <style>
-.modern-table tr:hover {
-    background: rgba(45, 90, 160, 0.02) !important;
+.calendar-card {
+    background: #ffffff;
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+.calendar-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+.calendar-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+}
+.calendar-weekdays {
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-align: center;
+}
+.calendar-weekdays div {
+    padding: 0.35rem 0;
+}
+.day-cell {
+    background: #f8fafc;
+    border-radius: 12px;
+    min-height: 86px;
+    padding: 10px;
+    border: 1px solid transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+.day-cell:hover {
+    border-color: rgba(45, 90, 160, 0.2);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
+}
+.day-cell.empty {
+    background: transparent;
+    border: none;
+}
+.day-number {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.day-cell.today {
+    border-color: #facc15;
+    background: #fffbeb;
+}
+.day-cell.today .day-number {
+    color: #d97706;
+}
+.day-cell.has-leave {
+    border-color: rgba(45, 90, 160, 0.2);
+    background: #eef2ff;
+}
+.day-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: #ffffff;
+    border: 1px solid var(--medium-gray);
+}
+.day-chip.status-approved {
+    border-color: rgba(16, 185, 129, 0.35);
+    color: #0f9d74;
+    background: rgba(16, 185, 129, 0.08);
+}
+.day-chip.status-pending {
+    border-color: rgba(249, 115, 22, 0.35);
+    color: #d97706;
+    background: rgba(249, 115, 22, 0.08);
+}
+.day-chip.status-rejected {
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #b91c1c;
+    background: rgba(239, 68, 68, 0.08);
+}
+.calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    background: var(--medium-gray);
+}
+.legend-dot.status-approved { background: #10b981; }
+.legend-dot.status-pending { background: #f59e0b; }
+.legend-dot.status-rejected { background: #ef4444; }
+.legend-dot.holiday-dot { background: #f97316; }
+.legend-dot.event-dot { background: #3b82f6; }
+.legend-dot.today-dot { background: #facc15; }
+.day-cell.has-holiday {
+    border-color: rgba(249, 115, 22, 0.3);
+    background: rgba(249, 115, 22, 0.05);
+}
+.day-chip.holiday-chip {
+    border-color: rgba(249, 115, 22, 0.35);
+    color: #f97316;
+    background: rgba(249, 115, 22, 0.1);
+    padding: 4px 6px;
+}
+.day-chip.event-chip {
+    border-color: rgba(59, 130, 246, 0.35);
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+    padding: 4px 6px;
+}
+.day-cell.has-events {
+    border-color: rgba(59, 130, 246, 0.2);
+}
+@media (max-width: 768px) {
+    .day-cell {
+        min-height: 76px;
+        padding: 8px;
+    }
+    .day-chip {
+        font-size: 0.75rem;
+        padding: 5px 8px;
+    }
 }
 </style>
 {% endblock %}
-

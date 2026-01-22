@@ -140,7 +140,7 @@ class SlmsappStaffLeave(models.Model):
     status = models.IntegerField()
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField()
-    staff_id = models.ForeignKey(SlmsappStaff, models.DO_NOTHING)
+    employee_id = models.ForeignKey(SlmsappStaff, models.DO_NOTHING)
 
     class Meta:
         managed = False
