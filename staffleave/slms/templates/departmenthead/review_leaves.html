@@ -118,18 +118,18 @@
                         <td style="padding: 1rem; color: var(--text-secondary); font-size: 0.875rem;">{{ leave.created_at|date:"M d, Y" }}</td>
                         <td style="padding: 1rem; text-align: center;">
                             {% if leave.status == 0 %}
-                            <div style="display: flex; gap: 0.75rem; justify-content: center;">
-                                <a href="{% url 'dh_approve_leave' leave.id %}" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-radius: var(--radius-md); text-decoration: none; font-size: 0.95rem; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); border: 2px solid #10b981;" onclick="return confirm('Approve this leave application?')" onmouseover="this.style.boxShadow='0 6px 16px rgba(16, 185, 129, 0.4)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.3)'; this.style.transform='translateY(0)';" title="Approve">
-                                    <i class="material-icons" style="font-size: 22px;">check_circle</i>
+                            <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                                <a href="{% url 'dh_approve_leave' leave.id %}" style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border-radius: var(--radius-md); text-decoration: none; font-size: 0.8rem; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2); border: 1px solid #10b981;" onclick="return confirm('Approve this leave application?')" onmouseover="this.style.boxShadow='0 3px 10px rgba(16, 185, 129, 0.3)'; this.style.transform='translateY(-1px)';" onmouseout="this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.2)'; this.style.transform='translateY(0)';" title="Approve">
+                                    <i class="material-icons" style="font-size: 18px;">check_circle</i>
                                     Approve
                                 </a>
-                                <a href="{% url 'dh_reject_leave' leave.id %}" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border-radius: var(--radius-md); text-decoration: none; font-size: 0.95rem; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); border: 2px solid #ef4444;" onmouseover="this.style.boxShadow='0 6px 16px rgba(239, 68, 68, 0.4)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.boxShadow='0 4px 12px rgba(239, 68, 68, 0.3)'; this.style.transform='translateY(0)';" title="Reject">
-                                    <i class="material-icons" style="font-size: 22px;">cancel</i>
+                                <a href="{% url 'dh_reject_leave' leave.id %}" style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border-radius: var(--radius-md); text-decoration: none; font-size: 0.8rem; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2); border: 1px solid #ef4444;" onmouseover="this.style.boxShadow='0 3px 10px rgba(239, 68, 68, 0.3)'; this.style.transform='translateY(-1px)';" onmouseout="this.style.boxShadow='0 2px 8px rgba(239, 68, 68, 0.2)'; this.style.transform='translateY(0)';" title="Reject">
+                                    <i class="material-icons" style="font-size: 18px;">cancel</i>
                                     Reject
                                 </a>
                             </div>
                             {% else %}
-                            <span style="color: var(--text-secondary); font-size: 0.875rem; font-weight: 500; padding: 0.5rem 1rem; background: var(--light-gray); border-radius: var(--radius-md); display: inline-block;">Processed</span>
+                            <span style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 500; padding: 0.35rem 0.75rem; background: var(--light-gray); border-radius: var(--radius-md); display: inline-block;">Processed</span>
                             {% endif %}
                         </td>
                     </tr>

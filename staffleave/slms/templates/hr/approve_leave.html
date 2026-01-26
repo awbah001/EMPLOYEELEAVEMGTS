@@ -143,15 +143,17 @@
                             {% endif %}
                         </td>
                         <td>
-                            <div style="display: flex; gap: 0.5rem;">
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                 <form method="POST" action="{% url 'hr_approve_leave_action' leave.id %}" style="display: inline;" onsubmit="return confirm('Are you sure you want to approve this leave?');">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem; border: none; cursor: pointer;" title="Approve">
-                                        <i class="material-icons" style="font-size: 1rem;">check</i>
+                                    <button type="submit" style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-size: 0.8rem; font-weight: 600; border: 1px solid #10b981; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);" onmouseover="this.style.boxShadow='0 3px 10px rgba(16, 185, 129, 0.3)'; this.style.transform='translateY(-1px)';" onmouseout="this.style.boxShadow='0 2px 8px rgba(16, 185, 129, 0.2)'; this.style.transform='translateY(0)';" title="Approve">
+                                        <i class="material-icons" style="font-size: 18px;">check_circle</i>
+                                        Approve
                                     </button>
                                 </form>
-                                <a href="{% url 'hr_reject_leave' leave.id %}" class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem; background: var(--error-red); color: white;" title="Reject">
-                                    <i class="material-icons" style="font-size: 1rem;">close</i>
+                                <a href="{% url 'hr_reject_leave' leave.id %}" style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; font-size: 0.8rem; font-weight: 600; border: 1px solid #ef4444; border-radius: var(--radius-md); text-decoration: none; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);" onmouseover="this.style.boxShadow='0 3px 10px rgba(239, 68, 68, 0.3)'; this.style.transform='translateY(-1px)';" onmouseout="this.style.boxShadow='0 2px 8px rgba(239, 68, 68, 0.2)'; this.style.transform='translateY(0)';" title="Reject">
+                                    <i class="material-icons" style="font-size: 18px;">cancel</i>
+                                    Reject
                                 </a>
                             </div>
                         </td>
