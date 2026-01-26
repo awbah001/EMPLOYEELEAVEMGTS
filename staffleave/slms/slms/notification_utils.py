@@ -30,6 +30,50 @@ def send_notification(sender, recipient, title, message, notification_type='info
     return notification
 
 
+def notify_leave_approved(leave, approved_by_user=None):
+    """
+    Send notification to employee when their leave application is approved
+    
+    Args:
+        leave: Employee_Leave instance that was approved
+        approved_by_user: CustomUser instance who approved the leave
+    
+    Returns:
+        Notification: Created notification instance or None
+    """
+    if not leave.employee_id or not leave.employee_id.admin:
+        return None
+    
+    # Determine the sender (use the approver or a system user)
+    if approved_by_user:
+        sender = approved_by_user
+    else:
+        system_user = CustomUser.objects.filter(user_type='1', is_superuser=True).first()
+        if not system_user:
+            return None
+        sender = system_user
+    
+    # Determine approval stage
+    approval_stage = "Admin"
+    if leave.approved_by_department_head and not leave.approved_by_hr:
+        approval_stage = "Department Head"
+    elif leave.approved_by_hr:
+        approval_stage = "HR"
+    
+    title = f"Leave Approved - {leave.leave_type_name or 'Leave'}"
+    message = f"Your leave application from {leave.from_date.strftime('%b %d, %Y')} to {leave.to_date.strftime('%b %d, %Y')} has been approved by {approval_stage}. You have {leave.from_date.strftime('%A, %B %d')} to {leave.to_date.strftime('%A, %B %d')} off."
+    
+    notification = send_notification(
+        sender=sender,
+        recipient=leave.employee_id.admin,
+        title=title,
+        message=message,
+        notification_type='success'
+    )
+    
+    return notification
+
+
 def notify_leave_ended(leave):
     """
     Send notification to employee when their leave has ended

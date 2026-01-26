@@ -165,7 +165,7 @@ def STAFF_LEAVE_VIEW(request):
     rejected_count = all_leaves.filter(status=2).count()
     
     context = {
-        "employee_leave": staff_leave,
+        "staff_leave": staff_leave,
         "total_count": total_count,
         "pending_count": pending_count,
         "approved_count": approved_count,
@@ -184,6 +184,10 @@ def STAFF_APPROVE_LEAVE(request,id):
     # Update leave balance automatically
     from .leave_utils import update_leave_balance_on_approval
     update_leave_balance_on_approval(leave)
+    
+    # Send approval notification to employee
+    from .notification_utils import notify_leave_approved
+    notify_leave_approved(leave, approved_by_user=request.user)
     
     messages.success(request, 'Leave application approved successfully.')
     return redirect('staff_leave_view_admin')

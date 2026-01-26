@@ -445,6 +445,10 @@ def HR_APPROVE_LEAVE(request, id):
         else:
             messages.success(request, 'Leave application approved successfully.')
         
+        # Send approval notification to employee
+        from .notification_utils import notify_leave_approved
+        notify_leave_approved(leave, approved_by_user=request.user)
+        
         return redirect('hr_approve_leave')
     
     return redirect('hr_approve_leave')

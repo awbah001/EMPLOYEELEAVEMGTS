@@ -162,7 +162,8 @@ class LeaveBalance(models.Model):
         return f"{self.employee.admin.username} - {self.leave_type.name} ({self.year})"
 
     def save(self, *args, **kwargs):
-        self.days_remaining = self.days_entitled - self.days_used
+        # Calculate days remaining, ensuring it never goes below 0
+        self.days_remaining = max(0, self.days_entitled - self.days_used)
         super().save(*args, **kwargs)
 
 

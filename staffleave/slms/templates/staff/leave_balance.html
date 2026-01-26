@@ -49,16 +49,24 @@
 {% if leave_balances %}
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
         {% for balance in leave_balances %}
-        <div class="modern-card" style="position: relative; overflow: hidden;">
+        <div class="modern-card" style="position: relative; overflow: hidden; border: {% if balance.days_used > balance.days_entitled %}2px solid #ef4444{% endif %};">
             <!-- Background decoration -->
-            <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: {% if balance.days_remaining > 0 %}rgba(16, 185, 129, 0.1){% else %}rgba(239, 68, 68, 0.1){% endif %}; border-radius: 50%;"></div>
+            <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: {% if balance.days_used > balance.days_entitled %}rgba(239, 68, 68, 0.15){% elif balance.days_remaining > 0 %}rgba(16, 185, 129, 0.1){% else %}rgba(239, 68, 68, 0.1){% endif %}; border-radius: 50%;"></div>
             
             <div style="position: relative; z-index: 1;">
+                <!-- Warning Alert if Used > Entitled -->
+                {% if balance.days_used > balance.days_entitled %}
+                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #dc2626; padding: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500;">
+                    <i class="material-icons" style="font-size: 20px;">warning</i>
+                    <span>You have used more leave than entitled. Please review with HR.</span>
+                </div>
+                {% endif %}
+                
                 <!-- Leave Type Header -->
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div style="width: 50px; height: 50px; background: {% if balance.days_remaining > 0 %}rgba(16, 185, 129, 0.1){% else %}rgba(239, 68, 68, 0.1){% endif %}; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                            <i class="material-icons" style="color: {% if balance.days_remaining > 0 %}#10b981{% else %}#ef4444{% endif %}; font-size: 1.5rem;">event_available</i>
+                        <div style="width: 50px; height: 50px; background: {% if balance.days_used > balance.days_entitled %}rgba(239, 68, 68, 0.1){% elif balance.days_remaining > 0 %}rgba(16, 185, 129, 0.1){% else %}rgba(239, 68, 68, 0.1){% endif %}; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="material-icons" style="color: {% if balance.days_used > balance.days_entitled %}#ef4444{% elif balance.days_remaining > 0 %}#10b981{% else %}#ef4444{% endif %}; font-size: 1.5rem;">event_available</i>
                         </div>
                         <div>
                             <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--text-primary);">{{ balance.leave_type.name }}</h3>
@@ -68,9 +76,9 @@
                 </div>
                 
                 <!-- Days Remaining (Large Display) -->
-                <div style="text-align: center; padding: 1.5rem; background: {% if balance.days_remaining > 0 %}rgba(16, 185, 129, 0.05){% else %}rgba(239, 68, 68, 0.05){% endif %}; border-radius: var(--radius-lg); margin-bottom: 1.5rem;">
+                <div style="text-align: center; padding: 1.5rem; background: {% if balance.days_used > balance.days_entitled %}rgba(239, 68, 68, 0.05){% elif balance.days_remaining > 0 %}rgba(16, 185, 129, 0.05){% else %}rgba(239, 68, 68, 0.05){% endif %}; border-radius: var(--radius-lg); margin-bottom: 1.5rem;">
                     <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Days Remaining</div>
-                    <div style="font-size: 3rem; font-weight: 700; color: {% if balance.days_remaining > 0 %}#10b981{% else %}#ef4444{% endif %}; line-height: 1;">
+                    <div style="font-size: 3rem; font-weight: 700; color: {% if balance.days_used > balance.days_entitled %}#ef4444{% elif balance.days_remaining > 0 %}#10b981{% else %}#ef4444{% endif %}; line-height: 1;">
                         {{ balance.days_remaining }}
                     </div>
                 </div>

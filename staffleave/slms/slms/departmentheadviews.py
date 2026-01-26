@@ -121,6 +121,10 @@ def APPROVE_LEAVE(request, id):
         else:
             messages.success(request, f'Leave application from {leave.employee_id.admin.get_full_name()} has been approved.')
         
+        # Send approval notification to employee
+        from .notification_utils import notify_leave_approved
+        notify_leave_approved(leave, approved_by_user=request.user)
+        
         return redirect('dh_review_leaves')
     except DepartmentHead.DoesNotExist:
         messages.error(request, 'Department Head profile not found.')
