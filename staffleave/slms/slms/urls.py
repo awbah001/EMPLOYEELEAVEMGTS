@@ -97,6 +97,12 @@ urlpatterns = [
     path('HR/Holidays/Manage', hrviews.MANAGE_PUBLIC_HOLIDAYS, name='hr_manage_holidays'),
     path('HR/Holidays/Update/<str:id>', hrviews.UPDATE_HOLIDAY, name='hr_update_holiday'),
     path('HR/Holidays/Delete/<str:id>', hrviews.DELETE_HOLIDAY, name='hr_delete_holiday'),
+    
+    # Saved Filters
+    path('API/SaveFilter', hrviews.save_filter, name='api_save_filter'),
+    path('API/LoadFilter/<int:filter_id>', hrviews.load_filter, name='api_load_filter'),
+    path('API/DeleteFilter/<int:filter_id>', hrviews.delete_filter, name='api_delete_filter'),
+    path('API/ListFilters', hrviews.list_saved_filters, name='api_list_filters'),
 
     # Employee Panel
     path('Employee/Home', staffviews.HOME, name='staff_home'),

@@ -34,28 +34,44 @@
     {% endfor %}
 {% endif %}
 
-<!-- Statistics Cards -->
+<!-- Statistics Cards with Filter Links -->
 {% if staff_leave %}
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-    <div class="modern-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: var(--white); text-align: center;">
+    <a href="{% url 'staff_leave_view_admin' %}?status=all" 
+       class="modern-card" 
+       style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: var(--white); text-align: center; text-decoration: none; cursor: pointer; transition: transform 0.2s ease; {% if status_filter == 'all' %}box-shadow: 0 8px 16px rgba(245, 158, 11, 0.3);{% endif %}"
+       onmouseover="this.style.transform='translateY(-4px)'"
+       onmouseout="this.style.transform='translateY(0)'">
         <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">{{total_count|default:0}}</div>
         <div style="font-size: 0.875rem; opacity: 0.9;">Total Requests</div>
-    </div>
+    </a>
     
-    <div class="modern-card" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: var(--white); text-align: center;">
+    <a href="{% url 'staff_leave_view_admin' %}?status=pending"
+       class="modern-card"
+       style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: var(--white); text-align: center; text-decoration: none; cursor: pointer; transition: transform 0.2s ease; {% if status_filter == 'pending' %}box-shadow: 0 8px 16px rgba(239, 68, 68, 0.3);{% endif %}"
+       onmouseover="this.style.transform='translateY(-4px)'"
+       onmouseout="this.style.transform='translateY(0)'">
         <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">{{pending_count|default:0}}</div>
         <div style="font-size: 0.875rem; opacity: 0.9;">Pending Review</div>
-    </div>
+    </a>
     
-    <div class="modern-card" style="background: linear-gradient(135deg, #10b981 0%, #047857 100%); color: var(--white); text-align: center;">
+    <a href="{% url 'staff_leave_view_admin' %}?status=approved"
+       class="modern-card"
+       style="background: linear-gradient(135deg, #10b981 0%, #047857 100%); color: var(--white); text-align: center; text-decoration: none; cursor: pointer; transition: transform 0.2s ease; {% if status_filter == 'approved' %}box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);{% endif %}"
+       onmouseover="this.style.transform='translateY(-4px)'"
+       onmouseout="this.style.transform='translateY(0)'">
         <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">{{approved_count|default:0}}</div>
         <div style="font-size: 0.875rem; opacity: 0.9;">Approved</div>
-    </div>
+    </a>
     
-    <div class="modern-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: var(--white); text-align: center;">
+    <a href="{% url 'staff_leave_view_admin' %}?status=rejected"
+       class="modern-card"
+       style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: var(--white); text-align: center; text-decoration: none; cursor: pointer; transition: transform 0.2s ease; {% if status_filter == 'rejected' %}box-shadow: 0 8px 16px rgba(139, 92, 246, 0.3);{% endif %}"
+       onmouseover="this.style.transform='translateY(-4px)'"
+       onmouseout="this.style.transform='translateY(0)'">
         <div style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">{{rejected_count|default:0}}</div>
         <div style="font-size: 0.875rem; opacity: 0.9;">Rejected</div>
-    </div>
+    </a>
 </div>
 {% endif %}
 
@@ -65,6 +81,13 @@
         <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
             <i class="material-icons" style="color: var(--primary-blue);">list_alt</i>
             Leave Applications
+            {% if status_filter == 'pending' %}
+                <span style="font-size: 0.75rem; background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 0.25rem 0.5rem; border-radius: 4px; margin-left: 0.5rem;">Pending Only</span>
+            {% elif status_filter == 'approved' %}
+                <span style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 0.25rem 0.5rem; border-radius: 4px; margin-left: 0.5rem;">Approved Only</span>
+            {% elif status_filter == 'rejected' %}
+                <span style="font-size: 0.75rem; background: rgba(139, 92, 246, 0.2); color: #8b5cf6; padding: 0.25rem 0.5rem; border-radius: 4px; margin-left: 0.5rem;">Rejected Only</span>
+            {% endif %}
         </h3>
     </div>
     

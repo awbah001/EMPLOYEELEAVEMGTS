@@ -134,17 +134,28 @@
         {% endfor %}
     {% endif %}
     
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
         <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
             <i class="material-icons" style="color: var(--primary-blue);">event_note</i>
             Your Leave Applications
         </h3>
-        {% if employee_leave_history %}
-        <a href="{% url 'staff_leave_view' %}" style="color: var(--primary-blue); text-decoration: none; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem;">
-            View all
-            <i class="material-icons" style="font-size: 1rem;">arrow_forward</i>
-        </a>
-        {% endif %}
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            {% if employee_leave_history %}
+            <a href="{% url 'staff_leave_view' %}" style="color: var(--primary-blue); text-decoration: none; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: rgba(45, 90, 160, 0.1); border-radius: var(--radius-md);">
+                View all ({{ total_applications }})
+                <i class="material-icons" style="font-size: 1rem;">arrow_forward</i>
+            </a>
+            <a href="{% url 'staff_leave_view' %}?status=0" style="color: #f59e0b; text-decoration: none; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: rgba(245, 158, 11, 0.1); border-radius: var(--radius-md);">
+                Pending ({{ pending_count }})
+            </a>
+            <a href="{% url 'staff_leave_view' %}?status=1" style="color: #10b981; text-decoration: none; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: rgba(16, 185, 129, 0.1); border-radius: var(--radius-md);">
+                Approved ({{ approved_count }})
+            </a>
+            <a href="{% url 'staff_leave_view' %}?status=2" style="color: #ef4444; text-decoration: none; font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; background: rgba(239, 68, 68, 0.1); border-radius: var(--radius-md);">
+                Rejected ({{ rejected_count }})
+            </a>
+            {% endif %}
+        </div>
     </div>
     
     {% if employee_leave_history %}

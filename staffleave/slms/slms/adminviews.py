@@ -141,14 +141,28 @@ def DELETE_STAFF(request,admin):
 
 
 @login_required(login_url='/')
+@login_required(login_url='/')
+@admin_required
 def STAFF_LEAVE_VIEW(request):
-    staff_leave = Employee_Leave.objects.all()
+    all_leaves = Employee_Leave.objects.all().order_by('-created_at')
     
-    # Calculate status counts
-    total_count = staff_leave.count()
-    pending_count = staff_leave.filter(status=0).count()
-    approved_count = staff_leave.filter(status=1).count()
-    rejected_count = staff_leave.filter(status=2).count()
+    # Get filter parameter from GET request
+    status_filter = request.GET.get('status', 'all')
+    
+    if status_filter == 'pending':
+        staff_leave = all_leaves.filter(status=0)
+    elif status_filter == 'approved':
+        staff_leave = all_leaves.filter(status=1)
+    elif status_filter == 'rejected':
+        staff_leave = all_leaves.filter(status=2)
+    else:
+        staff_leave = all_leaves
+    
+    # Calculate status counts (always from all leaves)
+    total_count = all_leaves.count()
+    pending_count = all_leaves.filter(status=0).count()
+    approved_count = all_leaves.filter(status=1).count()
+    rejected_count = all_leaves.filter(status=2).count()
     
     context = {
         "employee_leave": staff_leave,
@@ -156,6 +170,7 @@ def STAFF_LEAVE_VIEW(request):
         "pending_count": pending_count,
         "approved_count": approved_count,
         "rejected_count": rejected_count,
+        "status_filter": status_filter,
     }
     
     return render(request,'admin/staff_leave.html',context)
@@ -174,10 +189,12 @@ def STAFF_APPROVE_LEAVE(request,id):
     return redirect('staff_leave_view_admin')
 
 @login_required(login_url='/')
+@admin_required
 def STAFF_DISAPPROVE_LEAVE(request,id):
     leave = Employee_Leave.objects.get(id = id)
     leave.status = 2
     leave.save()
+    messages.success(request, 'Leave application rejected successfully.')
     return redirect('staff_leave_view_admin')
 
 

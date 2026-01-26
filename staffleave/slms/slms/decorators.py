@@ -2,10 +2,30 @@ from functools import wraps
 from django.shortcuts import redirect
 from django.contrib import messages
 
+def no_cache(view_func):
+    """
+    Decorator to prevent caching of authenticated pages.
+    Prevents users from accessing pages via browser back button after logout.
+    Sets cache headers: no-cache, no-store, must-revalidate, private, max-age=0
+    """
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        response = view_func(request, *args, **kwargs)
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate, private, max-age=0, post-check=0, pre-check=0'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = 'Thu, 01 Jan 1970 00:00:00 GMT'
+        response['Last-Modified'] = 'Thu, 01 Jan 1970 00:00:00 GMT'
+        response['Vary'] = 'Cookie'
+        if 'ETag' in response:
+            del response['ETag']
+        return response
+    return wrapper
+
 def role_required(*allowed_roles):
     """
     Decorator to check if user has required role(s)
     Usage: @role_required('1', '2') for Super Admin and Employee
+    Automatically prevents caching to protect authenticated pages
     """
     def decorator(view_func):
         @wraps(view_func)
@@ -19,7 +39,16 @@ def role_required(*allowed_roles):
                 messages.error(request, 'You do not have permission to access this page.')
                 return redirect('login')
             
-            return view_func(request, *args, **kwargs)
+            response = view_func(request, *args, **kwargs)
+            # Apply aggressive no-cache headers to prevent browser caching
+            response['Cache-Control'] = 'no-cache, no-store, must-revalidate, private, max-age=0, post-check=0, pre-check=0'
+            response['Pragma'] = 'no-cache'
+            response['Expires'] = 'Thu, 01 Jan 1970 00:00:00 GMT'
+            response['Last-Modified'] = 'Thu, 01 Jan 1970 00:00:00 GMT'
+            response['Vary'] = 'Cookie'
+            if 'ETag' in response:
+                del response['ETag']
+            return response
         return wrapper
     return decorator
 

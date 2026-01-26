@@ -1,0 +1,235 @@
+<!-- Saved Filters Component -->
+<div class="modern-card" style="padding: 1.5rem; background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(99, 102, 241, 0.05)); border-left: 4px solid var(--primary-blue); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+        
+        <!-- Saved Filters Section -->
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.95rem; font-weight: 600;">
+                <i class="material-icons" style="color: var(--primary-blue);">bookmark</i>
+                Saved Filters:
+            </div>
+            
+            <!-- Filters Dropdown -->
+            <div style="position: relative;">
+                <select id="savedFiltersDropdown" onchange="loadSavedFilter(this.value)" style="padding: 0.5rem 0.75rem; border: 1px solid var(--medium-gray); border-radius: var(--radius-md); background: white; cursor: pointer; min-width: 200px;">
+                    <option value="">-- Select a saved filter --</option>
+                </select>
+            </div>
+            
+            <!-- Delete Filter Button -->
+            <button id="deleteFilterBtn" onclick="deleteSavedFilter()" style="display: none; padding: 0.5rem 0.75rem; background: #ef4444; color: white; border: none; border-radius: var(--radius-md); cursor: pointer; font-size: 0.85rem; transition: all 0.2s ease;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+                <i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 0.25rem;">delete</i>
+                Delete
+            </button>
+        </div>
+        
+        <!-- Save Current Filter Button -->
+        <button id="saveFilterBtn" onclick="openSaveFilterDialog()" style="padding: 0.5rem 1rem; background: var(--primary-blue); color: white; border: none; border-radius: var(--radius-md); cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease;" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='var(--primary-blue)'">
+            <i class="material-icons" style="font-size: 18px;">save</i>
+            Save Filter
+        </button>
+    </div>
+</div>
+
+<!-- Save Filter Dialog -->
+<div id="saveFilterDialog" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="modern-card" style="width: 90%; max-width: 400px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--medium-gray);">
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                <i class="material-icons" style="color: var(--primary-blue);">bookmark</i>
+                Save Filter
+            </h3>
+            <button onclick="closeSaveFilterDialog()" style="background: none; border: none; cursor: pointer; font-size: 1.5rem; color: var(--text-secondary);">
+                <i class="material-icons">close</i>
+            </button>
+        </div>
+        
+        <form id="saveFilterForm">
+            <div style="margin-bottom: 1.5rem;">
+                <label for="filterName" style="display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">
+                    Filter Name
+                </label>
+                <input 
+                    type="text" 
+                    id="filterName" 
+                    placeholder="e.g., 'Pending Department Head Approvals'"
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--medium-gray); border-radius: var(--radius-md); font-size: 0.95rem;"
+                />
+                <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem;">Give this filter a descriptive name</small>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.875rem;">
+                    <input type="checkbox" id="setAsDefault" style="cursor: pointer;">
+                    <span>Set as default filter</span>
+                </label>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" onclick="closeSaveFilterDialog()" style="padding: 0.75rem 1.5rem; background: var(--light-gray); color: var(--text-primary); border: 1px solid var(--medium-gray); border-radius: var(--radius-md); cursor: pointer;">
+                    Cancel
+                </button>
+                <button type="button" onclick="submitSaveFilter()" style="padding: 0.75rem 1.5rem; background: var(--primary-blue); color: white; border: none; border-radius: var(--radius-md); cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="material-icons" style="font-size: 18px;">save</i>
+                    Save Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let currentFilters = {};
+let currentFilterId = null;
+
+// Load saved filters on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadSavedFiltersDropdown();
+});
+
+function loadSavedFiltersDropdown() {
+    fetch('{% url "api_list_filters" %}')
+        .then(response => response.json())
+        .then(data => {
+            const dropdown = document.getElementById('savedFiltersDropdown');
+            dropdown.innerHTML = '<option value="">-- Select a saved filter --</option>';
+            
+            if (data.saved_filters && data.saved_filters.length > 0) {
+                data.saved_filters.forEach(filter => {
+                    const option = document.createElement('option');
+                    option.value = filter.id;
+                    option.textContent = filter.name;
+                    if (filter.is_default) {
+                        option.textContent += ' (Default)';
+                    }
+                    dropdown.appendChild(option);
+                });
+            }
+        })
+        .catch(error => console.error('Error loading filters:', error));
+}
+
+function openSaveFilterDialog() {
+    // Capture current filter values from the form
+    const filterForm = document.getElementById('filterForm') || document.querySelector('form');
+    if (filterForm) {
+        const formData = new FormData(filterForm);
+        currentFilters = Object.fromEntries(formData);
+    }
+    
+    document.getElementById('saveFilterDialog').style.display = 'flex';
+    document.getElementById('filterName').focus();
+}
+
+function closeSaveFilterDialog() {
+    document.getElementById('saveFilterDialog').style.display = 'none';
+    document.getElementById('filterName').value = '';
+    document.getElementById('setAsDefault').checked = false;
+}
+
+function submitSaveFilter() {
+    const filterName = document.getElementById('filterName').value.trim();
+    const setAsDefault = document.getElementById('setAsDefault').checked;
+    
+    if (!filterName) {
+        alert('Please enter a filter name');
+        return;
+    }
+    
+    const payload = {
+        name: filterName,
+        filter_type: 'leave_review',
+        filter_params: currentFilters,
+        is_default: setAsDefault
+    };
+    
+    fetch('{% url "api_save_filter" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Filter saved successfully!');
+            closeSaveFilterDialog();
+            loadSavedFiltersDropdown();
+        } else {
+            alert('Error saving filter: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving filter');
+    });
+}
+
+function loadSavedFilter(filterId) {
+    if (!filterId) {
+        document.getElementById('deleteFilterBtn').style.display = 'none';
+        return;
+    }
+    
+    currentFilterId = filterId;
+    document.getElementById('deleteFilterBtn').style.display = 'inline-block';
+    
+    fetch(`{% url "api_load_filter" filter_id=0 %}`.replace('0', filterId))
+        .then(response => response.json())
+        .then(data => {
+            if (data.filter_params) {
+                // Apply the filter parameters to the form
+                const filterForm = document.getElementById('filterForm') || document.querySelector('form');
+                if (filterForm) {
+                    Object.keys(data.filter_params).forEach(key => {
+                        const input = filterForm.elements[key];
+                        if (input) {
+                            input.value = data.filter_params[key];
+                        }
+                    });
+                }
+                // Auto-submit the form to apply filters
+                filterForm?.submit();
+            }
+        })
+        .catch(error => console.error('Error loading filter:', error));
+}
+
+function deleteSavedFilter() {
+    if (!currentFilterId || !confirm('Are you sure you want to delete this saved filter?')) {
+        return;
+    }
+    
+    fetch(`{% url "api_delete_filter" filter_id=0 %}`.replace('0', currentFilterId), {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Filter deleted successfully');
+            document.getElementById('savedFiltersDropdown').value = '';
+            document.getElementById('deleteFilterBtn').style.display = 'none';
+            currentFilterId = null;
+            loadSavedFiltersDropdown();
+        } else {
+            alert('Error deleting filter: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error deleting filter');
+    });
+}
+
+// Close dialog on background click
+document.getElementById('saveFilterDialog')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeSaveFilterDialog();
+    }
+});
+</script>

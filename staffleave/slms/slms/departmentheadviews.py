@@ -105,8 +105,13 @@ def APPROVE_LEAVE(request, id):
             messages.warning(request, 'This leave application has already been processed.')
             return redirect('dh_review_leaves')
         
+        # Get approval comment if provided
+        approval_comment = request.POST.get('approval_comment', '') if request.method == 'POST' else ''
+        
         leave.status = 1
         leave.approved_by_department_head = request.user
+        if approval_comment:
+            leave.dh_approval_comment = approval_comment
         leave.save()
         
         # Update leave balance automatically
@@ -141,8 +146,11 @@ def REJECT_LEAVE(request, id):
                 return redirect('dh_review_leaves')
             
             rejection_reason = request.POST.get('rejection_reason', '')
+            approval_comment = request.POST.get('approval_comment', '')
             leave.status = 2
             leave.rejection_reason = rejection_reason
+            if approval_comment:
+                leave.dh_approval_comment = approval_comment
             leave.save()
             messages.success(request, f'Leave application from {leave.employee_id.admin.get_full_name()} has been rejected.')
             return redirect('dh_review_leaves')

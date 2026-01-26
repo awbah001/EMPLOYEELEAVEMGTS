@@ -49,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'slms.middleware.NoCacheMiddleware',  # Prevent caching of authenticated pages
 ]
 
 ROOT_URLCONF = 'slms.urls'
@@ -160,3 +161,18 @@ AUTHENTICATION_BACKENDS = [
 
 LOGIN_REDIRECT_URL = '/Index'
 LOGOUT_REDIRECT_URL = '/'
+# ===== Session Security Settings =====
+# Expire session when browser closes
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 3600  # 1 hour in seconds
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+
+# Cache settings for authenticated pages
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}

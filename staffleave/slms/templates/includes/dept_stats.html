@@ -1,0 +1,200 @@
+<!-- Department-wise Leave Statistics Card -->
+<div class="modern-card" style="grid-column: 1 / -1; padding: 2rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+        <i class="material-icons" style="color: var(--primary-blue); font-size: 28px;">domain</i>
+        <h2 style="margin: 0; font-size: 1.5rem; color: var(--text-primary);">Leave Statistics by Department</h2>
+    </div>
+    
+    <!-- Department Stats Table/Cards View -->
+    <div id="deptStatsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <!-- Will be populated by JavaScript -->
+    </div>
+    
+    <!-- Chart Section -->
+    <div style="margin-top: 2rem;">
+        <canvas id="deptStatsChart" style="max-height: 400px;"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+// Department-wise statistics data (passed from Django view)
+const deptData = {
+    labels: {{ dept_labels|safe }},
+    approved: {{ dept_approved|safe }},
+    pending: {{ dept_pending|safe }},
+    rejected: {{ dept_rejected|safe }}
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    renderDeptStatsCards();
+    renderDeptStatsChart();
+});
+
+function renderDeptStatsCards() {
+    const container = document.getElementById('deptStatsContainer');
+    container.innerHTML = '';
+    
+    if (!deptData.labels || deptData.labels.length === 0) {
+        container.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary);">No department data available</p>';
+        return;
+    }
+    
+    deptData.labels.forEach((dept, index) => {
+        const approved = deptData.approved[index] || 0;
+        const pending = deptData.pending[index] || 0;
+        const rejected = deptData.rejected[index] || 0;
+        const total = approved + pending + rejected;
+        const approvalRate = total > 0 ? ((approved / total) * 100).toFixed(1) : 0;
+        
+        const card = document.createElement('div');
+        card.className = 'modern-card';
+        card.style.padding = '1.5rem';
+        card.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(99, 102, 241, 0.05))';
+        card.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                <h3 style="margin: 0; color: var(--text-primary); font-size: 1.1rem;">
+                    <i class="material-icons" style="vertical-align: middle; margin-right: 0.5rem; color: var(--primary-blue);">domain</i>
+                    ${dept}
+                </h3>
+                <span style="background: var(--primary-blue); color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
+                    ${total} Total
+                </span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div style="text-align: center; padding: 0.75rem; background: rgba(16, 185, 129, 0.1); border-radius: var(--radius-md);">
+                    <div style="font-size: 1.75rem; font-weight: 700; color: #10b981;">${approved}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">Approved</div>
+                </div>
+                <div style="text-align: center; padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border-radius: var(--radius-md);">
+                    <div style="font-size: 1.75rem; font-weight: 700; color: #f59e0b;">${pending}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">Pending</div>
+                </div>
+                <div style="text-align: center; padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-radius: var(--radius-md);">
+                    <div style="font-size: 1.75rem; font-weight: 700; color: #ef4444;">${rejected}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">Rejected</div>
+                </div>
+            </div>
+            
+            <div style="background: white; border-radius: var(--radius-md); padding: 0.75rem; border-left: 4px solid var(--primary-blue);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Approval Rate</span>
+                    <span style="font-size: 1.25rem; font-weight: 700; color: var(--primary-blue);">${approvalRate}%</span>
+                </div>
+                <div style="background: var(--light-gray); border-radius: 10px; height: 6px; margin-top: 0.5rem; overflow: hidden;">
+                    <div style="background: linear-gradient(90deg, #10b981, var(--primary-blue)); height: 100%; width: ${approvalRate}%; border-radius: 10px;"></div>
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+function renderDeptStatsChart() {
+    if (!deptData.labels || deptData.labels.length === 0) return;
+    
+    const ctx = document.getElementById('deptStatsChart');
+    if (!ctx) return;
+    
+    // Destroy existing chart if any
+    if (window.deptChart instanceof Chart) {
+        window.deptChart.destroy();
+    }
+    
+    window.deptChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: deptData.labels,
+            datasets: [
+                {
+                    label: 'Approved',
+                    data: deptData.approved,
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderColor: '#10b981',
+                    borderWidth: 1,
+                    borderRadius: 5
+                },
+                {
+                    label: 'Pending',
+                    data: deptData.pending,
+                    backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                    borderColor: '#f59e0b',
+                    borderWidth: 1,
+                    borderRadius: 5
+                },
+                {
+                    label: 'Rejected',
+                    data: deptData.rejected,
+                    backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                    borderColor: '#ef4444',
+                    borderWidth: 1,
+                    borderRadius: 5
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20,
+                        font: {
+                            size: 12,
+                            weight: '600'
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: { size: 12, weight: '600' },
+                    bodyFont: { size: 12 },
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        font: { size: 11 }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: { size: 11 }
+                    },
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Auto-refresh chart if window is resized
+window.addEventListener('resize', function() {
+    if (window.deptChart) {
+        window.deptChart.resize();
+    }
+});
+</script>
+
+<style>
+@media (max-width: 768px) {
+    #deptStatsContainer {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>

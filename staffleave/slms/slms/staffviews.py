@@ -20,10 +20,14 @@ def HOME(request):
     """Employee Dashboard with leave history and calendar"""
     try:
         employee = Employee.objects.get(admin=request.user.id)
-        employee_leave_history = Employee_Leave.objects.filter(employee_id=employee.id).order_by('-created_at')[:5]
+        
+        # Get all leaves for this employee
+        all_leaves = Employee_Leave.objects.filter(employee_id=employee.id).order_by('-created_at')
+        
+        # Get only the latest 5 for dashboard preview
+        employee_leave_history = all_leaves[:5]
 
         # Counts for quick stats on dashboard
-        all_leaves = Employee_Leave.objects.filter(employee_id=employee.id)
         total_applications = all_leaves.count()
         pending_count = all_leaves.filter(status=0).count()
         approved_count = all_leaves.filter(status=1).count()
@@ -48,6 +52,12 @@ def HOME(request):
         return render(request, 'staff/home.html', context)
     except Employee.DoesNotExist:
         messages.error(request, 'Employee profile not found.')
+        return redirect('login')
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Error in HOME view for user {request.user.id}: {str(e)}', exc_info=True)
+        messages.error(request, 'An error occurred while loading your dashboard.')
         return redirect('login')
 
 
@@ -137,7 +147,7 @@ def STAFF_APPLY_LEAVE_SAVE(request):
                 return redirect('staff_apply_leave')
             
             # Calculate number of working days (excluding weekends and public holidays)
-            working_days = calculate_working_days(from_date, to_date, staff)
+            working_days = calculate_working_days(from_date, to_date, employee)
             
             # Get leave type
             leave_type = None
@@ -240,15 +250,22 @@ def STAFF_LEAVE_VIEW(request):
     """View full leave history"""
     try:
         employee = Employee.objects.get(admin=request.user.id)
-        employee_leave_history = Employee_Leave.objects.filter(employee_id=employee.id).order_by('-created_at')
+        
+        # Get all leaves ordered by newest first
+        all_leaves = Employee_Leave.objects.filter(employee_id=employee.id).order_by('-created_at')
         
         # Filter by status if provided
         status_filter = request.GET.get('status', '')
+        employee_leave_history = all_leaves
+        
         if status_filter:
-            employee_leave_history = employee_leave_history.filter(status=int(status_filter))
+            try:
+                status_int = int(status_filter)
+                employee_leave_history = employee_leave_history.filter(status=status_int)
+            except (ValueError, TypeError):
+                pass  # Invalid status filter, show all
         
         # Calculate status counts for all leaves (before filtering)
-        all_leaves = Employee_Leave.objects.filter(employee_id=employee.id)
         total_count = all_leaves.count()
         pending_count = all_leaves.filter(status=0).count()
         approved_count = all_leaves.filter(status=1).count()
@@ -266,6 +283,12 @@ def STAFF_LEAVE_VIEW(request):
     except Employee.DoesNotExist:
         messages.error(request, 'Employee profile not found.')
         return redirect('login')
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'Error in STAFF_LEAVE_VIEW for user {request.user.id}: {str(e)}', exc_info=True)
+        messages.error(request, 'An error occurred while loading your leave history.')
+        return redirect('staff_home')
 
 
 @login_required(login_url='/')

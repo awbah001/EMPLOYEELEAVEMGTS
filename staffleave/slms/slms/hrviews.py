@@ -429,8 +429,13 @@ def HR_APPROVE_LEAVE(request, id):
             messages.warning(request, 'Cannot approve a rejected leave application.')
             return redirect('hr_approve_leave')
         
+        # Get approval comment if provided
+        approval_comment = request.POST.get('approval_comment', '')
+        
         leave.status = 1
         leave.approved_by_hr = request.user
+        if approval_comment:
+            leave.hr_approval_comment = approval_comment
         leave.save()
         
         # Update leave balance automatically
@@ -452,8 +457,11 @@ def HR_REJECT_LEAVE(request, id):
     if request.method == 'POST':
         leave = get_object_or_404(Employee_Leave, id=id)
         rejection_reason = request.POST.get('rejection_reason', '')
+        approval_comment = request.POST.get('approval_comment', '')
         leave.status = 2
         leave.rejection_reason = rejection_reason
+        if approval_comment:
+            leave.hr_approval_comment = approval_comment
         leave.save()
         messages.success(request, 'Leave application rejected.')
         return redirect('hr_approve_leave')
@@ -993,3 +1001,94 @@ def HR_CALENDAR(request):
         'calendar_events': calendar_events,
     }
     return render(request, 'hr/calendar.html', context)
+
+# SavedFilter Views
+from slmsapp.models import SavedFilter
+from django.http import JsonResponse
+import json
+
+@login_required(login_url='/')
+def save_filter(request):
+    """Save a filter combination"""
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        try:
+            data = json.loads(request.body)
+            filter_name = data.get('name', '')
+            filter_type = data.get('filter_type', 'custom')
+            filter_params = data.get('params', {})
+            
+            if not filter_name:
+                return JsonResponse({'success': False, 'message': 'Filter name is required'})
+            
+            # Check if filter with same name exists
+            saved_filter, created = SavedFilter.objects.update_or_create(
+                user=request.user,
+                name=filter_name,
+                defaults={
+                    'filter_type': filter_type,
+                    'filter_params': filter_params,
+                }
+            )
+            
+            message = 'Filter saved successfully' if created else 'Filter updated successfully'
+            return JsonResponse({
+                'success': True,
+                'message': message,
+                'filter_id': saved_filter.id,
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    return JsonResponse({'success': False, 'message': 'Invalid request'})
+
+
+@login_required(login_url='/')
+def load_filter(request, filter_id):
+    """Load a saved filter"""
+    try:
+        saved_filter = SavedFilter.objects.get(id=filter_id, user=request.user)
+        return JsonResponse({
+            'success': True,
+            'name': saved_filter.name,
+            'params': saved_filter.filter_params,
+        })
+    except SavedFilter.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Filter not found'})
+
+
+@login_required(login_url='/')
+def delete_filter(request, filter_id):
+    """Delete a saved filter"""
+    if request.method == 'POST':
+        try:
+            saved_filter = SavedFilter.objects.get(id=filter_id, user=request.user)
+            saved_filter.delete()
+            return JsonResponse({'success': True, 'message': 'Filter deleted successfully'})
+        except SavedFilter.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Filter not found'})
+    
+    return JsonResponse({'success': False, 'message': 'Invalid request'})
+
+
+@login_required(login_url='/')
+def list_saved_filters(request):
+    """Get all saved filters for current user"""
+    filter_type = request.GET.get('type', '')
+    filters = SavedFilter.objects.filter(user=request.user)
+    
+    if filter_type:
+        filters = filters.filter(filter_type=filter_type)
+    
+    return JsonResponse({
+        'success': True,
+        'filters': [
+            {
+                'id': f.id,
+                'name': f.name,
+                'filter_type': f.filter_type,
+                'is_default': f.is_default,
+                'params': f.filter_params,
+            }
+            for f in filters
+        ]
+    })

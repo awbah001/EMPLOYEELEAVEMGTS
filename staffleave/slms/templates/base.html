@@ -952,6 +952,60 @@
             });
         </script>
 
+        <!-- Prevent Back Button and Forward Button Access After Logout -->
+        <script>
+            (function() {
+                // Disable both back and forward buttons for authenticated pages
+                window.history.pushState(null, null, window.location.href);
+                
+                window.onpopstate = function() {
+                    // Prevent back button
+                    window.history.pushState(null, null, window.location.href);
+                };
+                
+                // Also disable forward button by clearing forward history
+                window.history.forward = function() {
+                    // Do nothing - disables forward button
+                };
+                
+                // Check if page is being loaded from cache (bfcache)
+                window.addEventListener('pageshow', function(event) {
+                    if (event.persisted) {
+                        // Page was restored from bfcache, reload to check auth
+                        console.log('Page restored from cache, reloading...');
+                        window.location.reload();
+                    }
+                });
+                
+                // Clear page from bfcache on unload
+                window.addEventListener('pagehide', function(event) {
+                    if (event.persisted) {
+                        // Tell browser not to cache this page
+                        if (window.location.pathname !== '/' && window.location.pathname !== '/login') {
+                            // Authenticated page - make it non-cacheable
+                            fetch(window.location.href, { 
+                                method: 'GET',
+                                headers: { 'Cache-Control': 'no-cache' }
+                            }).catch(function() {});
+                        }
+                    }
+                });
+                
+                // Prevent keyboard shortcuts for back/forward
+                document.addEventListener('keydown', function(event) {
+                    // Alt + Left Arrow (back) - Firefox/Chrome/Safari
+                    // Alt + Right Arrow (forward) - Firefox/Chrome/Safari
+                    // Backspace (back) - some browsers
+                    if ((event.altKey && event.key === 'ArrowLeft') ||
+                        (event.altKey && event.key === 'ArrowRight') ||
+                        (event.key === 'Backspace' && !event.target.matches('input, textarea'))) {
+                        event.preventDefault();
+                        return false;
+                    }
+                });
+            })();
+        </script>
+
         {% block extra_js %}{% endblock %}
     </body>
 </html>

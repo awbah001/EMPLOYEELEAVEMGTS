@@ -114,8 +114,17 @@ def doLogin(request):
 
 
 def doLogout(request):
+    """
+    Logout view - Clear session and redirect to login page
+    Also sets cache-control headers to prevent page caching
+    """
     logout(request)
-    return redirect('login')
+    response = redirect('login')
+    # Clear cache headers on logout response too
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate, private, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
 @login_required(login_url='/')
 def INDEX(request):
      return render(request,'index.html')

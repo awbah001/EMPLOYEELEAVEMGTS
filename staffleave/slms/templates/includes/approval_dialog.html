@@ -1,0 +1,210 @@
+<!-- Approval Dialog Template -->
+<div id="approvalDialog" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center; flex-direction: column;">
+    <div class="modern-card" style="width: 90%; max-width: 500px; position: relative;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--medium-gray);">
+            <h3 style="margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+                <i class="material-icons" style="color: var(--primary-blue);" id="dialogIcon">check_circle</i>
+                <span id="dialogTitle">Approve Leave</span>
+            </h3>
+            <button onclick="closeApprovalDialog()" style="background: none; border: none; cursor: pointer; font-size: 1.5rem; color: var(--text-secondary);">
+                <i class="material-icons">close</i>
+            </button>
+        </div>
+        
+        <form id="approvalForm" method="POST" action="">
+            {% csrf_token %}
+            
+            <!-- Employee Info -->
+            <div style="background: var(--light-gray); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+                <div id="employeeInfo" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.875rem;">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Leave Details -->
+            <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.05); border-left: 4px solid var(--primary-blue); border-radius: var(--radius-md);">
+                <div id="leaveDetails" style="display: grid; gap: 0.75rem; font-size: 0.875rem;">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Approval Comment -->
+            <div style="margin-bottom: 1.5rem;">
+                <label for="approvalComment" style="display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">
+                    <i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 0.25rem;">comment</i>
+                    Comment (Optional)
+                </label>
+                <textarea 
+                    id="approvalComment" 
+                    name="approval_comment" 
+                    placeholder="Add a comment for the employee or HR team..."
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--medium-gray); border-radius: var(--radius-md); font-size: 0.95rem; font-family: inherit; resize: vertical; min-height: 100px;"
+                ></textarea>
+                <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem;">Comments are visible to employee and HR</small>
+            </div>
+            
+            <!-- Rejection Reason (Hidden by default) -->
+            <div id="rejectionReasonContainer" style="margin-bottom: 1.5rem; display: none;">
+                <label for="rejectionReason" style="display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">
+                    <i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 0.25rem;">error_outline</i>
+                    Rejection Reason
+                </label>
+                <textarea 
+                    id="rejectionReason" 
+                    name="rejection_reason" 
+                    placeholder="Explain why this leave is being rejected..."
+                    style="width: 100%; padding: 0.75rem; border: 1px solid var(--medium-gray); border-radius: var(--radius-md); font-size: 0.95rem; font-family: inherit; resize: vertical; min-height: 100px;"
+                ></textarea>
+                <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem;">This message will be sent to the employee</small>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" onclick="closeApprovalDialog()" class="btn-secondary" style="padding: 0.75rem 1.5rem;">
+                    Cancel
+                </button>
+                <button type="button" id="rejectBtn" onclick="switchToReject()" class="btn-danger" style="padding: 0.75rem 1.5rem; display: none;">
+                    <i class="material-icons" style="font-size: 1rem; margin-right: 0.25rem;">cancel</i>
+                    Reject
+                </button>
+                <button type="button" id="confirmBtn" onclick="submitApprovalForm()" class="btn-success" style="padding: 0.75rem 1.5rem;">
+                    <i class="material-icons" style="font-size: 1rem; margin-right: 0.25rem;">check_circle</i>
+                    Approve
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let currentLeaveId = null;
+let isRejectMode = false;
+
+function openApprovalDialog(leaveId, employeeName, leaveType, fromDate, toDate, days, message) {
+    currentLeaveId = leaveId;
+    isRejectMode = false;
+    
+    // Show dialog
+    document.getElementById('approvalDialog').style.display = 'flex';
+    
+    // Populate employee info
+    document.getElementById('employeeInfo').innerHTML = `
+        <div><strong>Employee:</strong> ${employeeName}</div>
+        <div><strong>Leave Type:</strong> ${leaveType}</div>
+        <div><strong>From Date:</strong> ${fromDate}</div>
+        <div><strong>To Date:</strong> ${toDate}</div>
+    `;
+    
+    // Populate leave details
+    document.getElementById('leaveDetails').innerHTML = `
+        <div><strong>Duration:</strong> ${days} days</div>
+        <div style="word-wrap: break-word;"><strong>Reason:</strong> ${message || 'N/A'}</div>
+    `;
+    
+    // Reset form
+    document.getElementById('approvalComment').value = '';
+    document.getElementById('rejectionReason').value = '';
+    document.getElementById('rejectionReasonContainer').style.display = 'none';
+    document.getElementById('dialogTitle').textContent = 'Approve Leave';
+    document.getElementById('dialogIcon').textContent = 'check_circle';
+    document.getElementById('dialogIcon').style.color = '#10b981';
+    document.getElementById('confirmBtn').textContent = 'Approve';
+    document.getElementById('confirmBtn').style.display = 'block';
+    document.getElementById('rejectBtn').style.display = 'none';
+    document.getElementById('confirmBtn').className = 'btn-success';
+    
+    // Update form action
+    const baseUrl = window.location.pathname.replace('review_leaves', '');
+    document.getElementById('approvalForm').action = baseUrl + 'Approve/' + leaveId;
+}
+
+function switchToReject() {
+    isRejectMode = true;
+    document.getElementById('rejectionReasonContainer').style.display = 'block';
+    document.getElementById('dialogTitle').textContent = 'Reject Leave';
+    document.getElementById('dialogIcon').textContent = 'cancel';
+    document.getElementById('dialogIcon').style.color = '#ef4444';
+    document.getElementById('confirmBtn').textContent = 'Confirm Rejection';
+    document.getElementById('confirmBtn').className = 'btn-danger';
+    document.getElementById('rejectBtn').style.display = 'none';
+    
+    // Update form action
+    const baseUrl = window.location.pathname.replace('review_leaves', '');
+    document.getElementById('approvalForm').action = baseUrl + 'Reject/' + currentLeaveId;
+}
+
+function submitApprovalForm() {
+    const form = document.getElementById('approvalForm');
+    const comment = document.getElementById('approvalComment').value;
+    const reason = document.getElementById('rejectionReason').value;
+    
+    if (isRejectMode && !reason.trim()) {
+        alert('Please provide a rejection reason');
+        return;
+    }
+    
+    // Ensure we're using POST
+    form.method = 'POST';
+    
+    // For approval, use GET (or update action), for rejection use POST
+    if (!isRejectMode) {
+        form.method = 'POST';
+    }
+    
+    form.submit();
+}
+
+function closeApprovalDialog() {
+    document.getElementById('approvalDialog').style.display = 'none';
+    currentLeaveId = null;
+    isRejectMode = false;
+}
+
+// Close on background click
+document.getElementById('approvalDialog')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeApprovalDialog();
+    }
+});
+</script>
+
+<style>
+.btn-success {
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn-secondary {
+    background: var(--light-gray);
+    color: var(--text-primary);
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: var(--medium-gray);
+}
+</style>

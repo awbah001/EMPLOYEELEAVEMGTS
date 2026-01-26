@@ -184,6 +184,8 @@ class Employee_Leave(models.Model):
     approved_by_department_head = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_leaves_dh')
     approved_by_hr = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_leaves_hr')
     rejection_reason = models.TextField(blank=True, null=True)
+    dh_approval_comment = models.TextField(blank=True, null=True)  # Department Head approval comment
+    hr_approval_comment = models.TextField(blank=True, null=True)  # HR approval comment
     leave_end_notification_sent = models.BooleanField(default=False, null=True)  # Track if employee was notified when leave ended
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -307,4 +309,31 @@ class SystemSettings(models.Model):
 
     def __str__(self):
         return self.key
+
+
+class SavedFilter(models.Model):
+    """Save and reuse common filter combinations"""
+    FILTER_TYPE_CHOICES = [
+        ('leave_review', 'Leave Review'),
+        ('department_leaves', 'Department Leaves'),
+        ('analytics', 'Analytics'),
+        ('custom', 'Custom'),
+    ]
+    
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='saved_filters')
+    name = models.CharField(max_length=100)  # e.g., "Pending Leaves", "This Month"
+    filter_type = models.CharField(max_length=50, choices=FILTER_TYPE_CHOICES, default='custom')
+    filter_params = models.JSONField()  # Store filter parameters as JSON
+    is_default = models.BooleanField(default=False)  # Set as default filter for this user
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Saved Filter"
+        verbose_name_plural = "Saved Filters"
+        ordering = ['-is_default', '-updated_at']
+        unique_together = ['user', 'name']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.name}"
 
