@@ -302,57 +302,58 @@ table textarea {
   transform: translateY(-50%) scale(1.1);
 }
 
-/* Modern Button Styles */
+/* Modern Button Styles - UNIFIED AND CONSISTENT */
+.btn-primary,
+.btn-secondary,
+.btn,
+button:not(.sidebar-toggle):not(.notification-btn):not(#themeToggle):not(.header-actions button),
+input[type="submit"],
+input[type="reset"],
+input[type="button"] {
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 10px !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+  height: 44px !important;
+  min-height: 44px !important;
+}
+
 .btn-primary {
-  background: var(--gradient-primary);
-  color: var(--white);
-  border: none;
-  padding: 0.875rem 1.5rem;
-  border-radius: var(--radius-md);
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: auto;
-  min-width: 150px;
+  background: var(--gradient-primary) !important;
+  color: var(--white) !important;
+  border: none !important;
+  width: auto !important;
+  min-width: auto !important;
   margin-bottom: var(--space-md);
-  box-sizing: border-box;
 }
 
 .btn-primary:hover {
-  background: var(--gradient-secondary);
+  background: var(--gradient-secondary) !important;
   transform: translateY(-1px);
   box-shadow: var(--shadow-medium);
 }
 
 .btn-secondary {
-  background: transparent;
-  color: var(--primary-blue);
-  border: 2px solid var(--medium-gray);
-  padding: 0.875rem 1.5rem;
-  border-radius: var(--radius-md);
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: auto;
-  min-width: 150px;
-  box-sizing: border-box;
+  background: transparent !important;
+  color: var(--primary-blue) !important;
+  border: 2px solid var(--medium-gray) !important;
+  width: auto !important;
+  min-width: auto !important;
+  margin-bottom: 0;
 }
 
 .btn-secondary:hover {
-  border-color: var(--primary-blue);
-  background: rgba(45, 90, 160, 0.05);
+  border-color: var(--primary-blue) !important;
+  background: rgba(45, 90, 160, 0.05) !important;
 }
 
 /* Alert Messages */
@@ -430,18 +431,6 @@ table textarea {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-}
-
-/* Primary and secondary button polish */
-.btn-primary {
-  background: linear-gradient(135deg,var(--primary-blue), var(--primary-light-blue)) !important;
-  padding: 0.75rem 1.25rem !important;
-  border-radius: 10px !important;
-}
-
-.btn-secondary {
-  border-radius: 10px;
-  padding: 0.65rem 1rem;
 }
 
 /* Small, subtle input and container improvements */
