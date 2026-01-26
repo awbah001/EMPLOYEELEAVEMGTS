@@ -373,8 +373,8 @@
                 </div>
                 
                 <!-- Sign In Form -->
-                <div class="auth-form">
-                    <h2>Sign in</h2>
+                <div class="auth-form" style="align-items: center;">
+                    <h2 style="text-align: center;">Sign in</h2>
                     
                     <!-- Error Messages -->
                     {% if messages %}
@@ -388,12 +388,12 @@
                         {% endfor %}
                     {% endif %}
                     
-                    <form action="{% url 'doLogin' %}" method="POST">
+                    <form action="{% url 'doLogin' %}" method="POST" style="width: 100%; max-width: 350px;">
                         {% csrf_token %}
                         
                         <!-- Email Input -->
                         <div class="form-group">
-                            <label for="email">Email Address</label>
+                            <label for="email" style="text-align: left;">Email Address</label>
                             <div style="position: relative;">
                                 <i class="material-icons input-icon">email</i>
                                 <input 
@@ -403,14 +403,14 @@
                                     class="form-input" 
                                     placeholder="Enter your email"
                                     required 
-                                    style="padding-left: 3rem;"
+                                    style="padding-left: 3rem; width: 100%;"
                                 />
                             </div>
                         </div>
                         
                         <!-- Password Input -->
                         <div class="form-group">
-                            <label for="password">Password</label>
+                            <label for="password" style="text-align: left;">Password</label>
                             <div style="position: relative;">
                                 <i class="material-icons input-icon">lock</i>
                                 <input 
@@ -420,13 +420,13 @@
                                     class="form-input" 
                                     placeholder="Enter your password"
                                     required 
-                                    style="padding-left: 3rem;"
+                                    style="padding-left: 3rem; width: 100%;"
                                 />
                             </div>
                         </div>
                         
                         <!-- Sign In Button -->
-                        <button type="submit" class="btn-primary" style="padding: 0.75rem 1.25rem; min-width: 140px; font-size: 0.9375rem;">
+                        <button type="submit" class="btn-primary" style="padding: 0.75rem 1.25rem; min-width: 140px; font-size: 0.9375rem; width: 100%;">
                             <i class="material-icons" style="font-size: 18px;">login</i>
                             Sign in
                         </button>
