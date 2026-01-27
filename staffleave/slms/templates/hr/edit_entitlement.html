@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Leave Entitlement - HR Dashboard{% endblock %}
+
+{% block content %}
+<div class="modern-card" style="background: var(--gradient-primary); color: var(--white); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="width: 50px; height: 50px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+            <i class="material-icons" style="font-size: 1.5rem;">edit</i>
+        </div>
+        <div>
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600;">Edit Leave Entitlement</h2>
+            <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Update leave entitlement for employee</p>
+        </div>
+    </div>
+</div>
+
+<!-- Messages -->
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+            <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">error_outline</i>
+                {{message}}
+            </div>
+        {% elif message.tags == 'success' %}
+            <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+                <i class="material-icons" style="font-size: 16px; margin-right: 8px;">check_circle</i>
+                {{message}}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<!-- Edit Form -->
+<div class="modern-card">
+    <div style="margin-bottom: 1.5rem;">
+        <h3 style="margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="material-icons" style="color: var(--primary-blue);">info</i>
+            Entitlement Details
+        </h3>
+    </div>
+
+    <form method="POST" style="max-width: 500px;">
+        {% csrf_token %}
+        
+        <!-- Employee Information (Read-only) -->
+        <div class="form-group">
+            <label style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; display: block;">Employee</label>
+            <div style="padding: 0.75rem; background: var(--light-gray); border-radius: var(--radius-md); border: 1px solid var(--medium-gray);">
+                <div style="font-weight: 600; color: var(--text-primary);">{{ entitlement.employee.admin.get_full_name }}</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">{{ entitlement.employee.employee_id }} • {{ entitlement.employee.department.name }}</div>
+            </div>
+        </div>
+
+        <!-- Leave Type (Read-only) -->
+        <div class="form-group">
+            <label style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; display: block;">Leave Type</label>
+            <div style="padding: 0.75rem; background: var(--light-gray); border-radius: var(--radius-md); border: 1px solid var(--medium-gray);">
+                <div style="font-weight: 600; color: var(--text-primary);">{{ entitlement.leave_type.name }}</div>
+                <div style="font-size: 0.875rem; color: var(--text-secondary);">Year: {{ entitlement.year }}</div>
+            </div>
+        </div>
+
+        <!-- Current Entitlement (Read-only) -->
+        <div class="form-group">
+            <label style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; display: block;">Current Entitlement</label>
+            <div style="padding: 0.75rem; background: var(--light-gray); border-radius: var(--radius-md); border: 1px solid var(--medium-gray);">
+                <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary-blue);">{{ entitlement.days_entitled }} days</div>
+            </div>
+        </div>
+
+        <!-- New Entitlement Days (Editable) -->
+        <div class="form-group">
+            <label for="entitlement_days" style="font-weight: 500;">New Entitlement Days *</label>
+            <div style="position: relative;">
+                <i class="material-icons input-icon">event</i>
+                <input 
+                    type="number" 
+                    id="entitlement_days" 
+                    name="entitlement_days" 
+                    class="form-input" 
+                    value="{{ entitlement.days_entitled }}"
+                    placeholder="Enter days"
+                    min="0" 
+                    step="0.5"
+                    style="width: 100%; max-width: 100%; padding-left: 3rem;"
+                    required
+                />
+            </div>
+            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem;">You can enter decimal values (e.g., 15.5 for 15 and half days)</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn-primary" style="flex: 1;">
+                <i class="material-icons">save</i>
+                Save Changes
+            </button>
+            <a href="{% url 'hr_set_entitlements' %}" class="btn-secondary" style="flex: 1; text-align: center; text-decoration: none;">
+                <i class="material-icons">close</i>
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Additional Information -->
+<div class="modern-card" style="margin-top: 2rem;">
+    <h3 style="margin: 0 0 1rem 0; display: flex; align-items: center; gap: 0.5rem;">
+        <i class="material-icons" style="color: var(--primary-blue);">warning</i>
+        Important Notes
+    </h3>
+    <ul style="margin: 0; padding-left: 1.5rem; color: var(--text-secondary); font-size: 0.875rem;">
+        <li style="margin-bottom: 0.75rem;">Changing the entitlement will update the leave balance automatically</li>
+        <li style="margin-bottom: 0.75rem;">The change applies only to the specified year</li>
+        <li style="margin-bottom: 0.75rem;">Already used leave days will not be affected</li>
+        <li>Remaining days will be recalculated based on the new entitlement</li>
+    </ul>
+</div>
+
+<style>
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xs);
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem var(--space-sm);
+    border: 2px solid var(--medium-gray);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    background: var(--white);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(45, 90, 160, 0.1);
+}
+
+.input-icon {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--dark-gray);
+    font-size: 1.25rem;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 1;
+}
+
+.form-group:focus-within .input-icon {
+    color: var(--primary-blue);
+    transform: translateY(-50%) scale(1.1);
+}
+</style>
+{% endblock %}

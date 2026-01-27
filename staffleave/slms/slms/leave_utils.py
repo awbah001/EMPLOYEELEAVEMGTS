@@ -70,7 +70,8 @@ def update_leave_balance_on_approval(leave):
         defaults={
             'days_entitled': 0,
             'days_used': working_days,
-            'days_remaining': 0 - working_days  # Will be recalculated in save()
+            # Store a non-negative default; model save will recalc precisely
+            'days_remaining': 0
         }
     )
     
@@ -78,6 +79,9 @@ def update_leave_balance_on_approval(leave):
     if not created:
         leave_balance.days_used += working_days
         leave_balance.save()  # This will recalculate days_remaining
+    else:
+        # Ensure model-level recalculation is applied after creation
+        leave_balance.save()
     
     return True
 

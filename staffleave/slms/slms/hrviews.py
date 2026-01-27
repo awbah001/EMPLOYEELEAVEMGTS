@@ -945,6 +945,43 @@ def DELETE_ENTITLEMENT(request, id):
 
 @login_required(login_url='/')
 @hr_required
+def EDIT_ENTITLEMENT(request, id):
+    """Edit leave entitlement"""
+    entitlement = get_object_or_404(LeaveEntitlement, id=id)
+    
+    if request.method == 'POST':
+        try:
+            new_days = float(request.POST.get('entitlement_days', 0))
+            
+            # Update entitlement
+            entitlement.days_entitled = new_days
+            entitlement.save()
+            
+            # Update associated balance
+            balance = LeaveBalance.objects.filter(
+                employee=entitlement.employee,
+                leave_type=entitlement.leave_type,
+                year=entitlement.year
+            ).first()
+            
+            if balance:
+                balance.days_entitled = new_days
+                balance.save()
+            
+            messages.success(request, 'Leave entitlement updated successfully')
+        except Exception as e:
+            messages.error(request, f'Error updating entitlement: {str(e)}')
+        
+        return redirect('hr_set_entitlements')
+    
+    context = {
+        'entitlement': entitlement
+    }
+    return render(request, 'hr/edit_entitlement.html', context)
+
+
+@login_required(login_url='/')
+@hr_required
 def HR_CALENDAR(request):
     """Simple calendar widget for HR"""
     from datetime import date

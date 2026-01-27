@@ -89,6 +89,7 @@ urlpatterns = [
     path('HR/LeaveTypes/Manage', hrviews.MANAGE_LEAVE_TYPES, name='hr_manage_leave_types'),
     path('HR/LeaveTypes/Update/<str:id>', hrviews.UPDATE_LEAVE_TYPE, name='hr_update_leave_type'),
     path('HR/Entitlements/Set', hrviews.SET_LEAVE_ENTITLEMENTS, name='hr_set_entitlements'),
+    path('HR/Entitlements/Edit/<str:id>', hrviews.EDIT_ENTITLEMENT, name='hr_edit_entitlement'),
     path('HR/Entitlements/Delete/<str:id>', hrviews.DELETE_ENTITLEMENT, name='hr_delete_entitlement'),
     path('HR/Leave/Approve', hrviews.APPROVE_OVERRIDE_LEAVE, name='hr_approve_leave'),
     path('HR/Leave/Approve/<str:id>', hrviews.HR_APPROVE_LEAVE, name='hr_approve_leave_action'),
